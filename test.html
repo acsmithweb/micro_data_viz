@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dynamic GridStack Buckets</title>
 
-  <!-- GridStack.js CSS (Standard v12+) -->
+  <!-- GridStack.js CSS -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.1.0/dist/gridstack.min.css" />
 
   <style>
     body { background: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; }
-    .controls { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 10px; }
+    .controls { background: #fff; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; display: flex; gap: 10px; align-items: center; }
     .bucket-container { display: flex; flex-direction: column; gap: 30px; }
     .bucket-wrapper { background: #fff; padding: 10px; border: 1px solid #dee2e6; border-radius: 8px; }
-    .bucket-header { font-weight: bold; margin-bottom: 10px; color: #495057; display: flex; justify-content: space-between; }
-
-    /* GridStack Styling */
+    .bucket-header { font-weight: bold; margin-bottom: 10px; color: #495057; }
     .grid-stack { background: #f1f3f5; border: 2px dashed #ced4da; min-height: 200px; }
     .grid-stack-item-content {
       background-color: #007bff; color: white; border-radius: 4px;
       display: flex; align-items: center; justify-content: center; text-align: center;
+      padding: 5px;
     }
+    input { padding: 8px; border: 1px solid #ced4da; border-radius: 4px; }
     button { padding: 8px 16px; border-radius: 4px; border: none; cursor: pointer; transition: 0.2s; }
     .btn-bucket { background: #6c757d; color: white; }
     .btn-widget { background: #28a745; color: white; }
@@ -31,70 +31,72 @@
 
   <div class="controls">
     <button class="btn-bucket" id="add-bucket">Add New Bucket</button>
-    <button class="btn-widget" id="add-widget">Add Widget to Latest Bucket</button>
+    <input type="text" id="widget-text" placeholder="Enter widget text...">
+    <button class="btn-widget" id="add-widget">Add Widget</button>
   </div>
 
-  <div id="main-container" class="bucket-container">
-    <!-- Buckets will be injected here -->
-  </div>
+  <div id="main-container" class="bucket-container"></div>
 
   <!-- GridStack.js Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/gridstack@12.1.0/dist/gridstack-all.js"></script>
 
   <script>
     const mainContainer = document.getElementById('main-container');
-    const grids = []; // Array to track active GridStack instances
+    const widgetInput = document.getElementById('widget-text');
+    const grids = [];
     let bucketCount = 0;
-    let widgetCount = 0;
 
     function createBucket() {
       bucketCount++;
       const bucketId = `bucket-${bucketCount}`;
 
-      // 1. Create HTML structure for the new bucket
       const wrapper = document.createElement('div');
       wrapper.className = 'bucket-wrapper';
       wrapper.innerHTML = `
-        <div class="bucket-header">
-          <span>Bucket #${bucketCount} (12 Columns, Max 6 Rows)</span>
-        </div>
+        <div class="bucket-header">Bucket #${bucketCount}</div>
         <div id="${bucketId}" class="grid-stack"></div>
       `;
       mainContainer.appendChild(wrapper);
 
-      // 2. Initialize GridStack for this specific element [1]
-      // acceptWidgets: true allows widgets to be dragged between grids [2]
       const grid = GridStack.init({
         column: 12,
         maxRow: 6,
         cellHeight: 80,
         margin: 5,
         acceptWidgets: true,
-        dragIn: '.grid-stack-item', // Allows dragging items from other grids
         float: true
       }, `#${bucketId}`);
 
       grids.push(grid);
     }
 
-    // Add Widget Logic
     document.getElementById('add-widget').addEventListener('click', () => {
       if (grids.length === 0) {
         alert("Create a bucket first!");
         return;
       }
 
-      widgetCount++;
-      // Use the most recently created grid
       const latestGrid = grids[grids.length - 1];
+      const userInput = widgetInput.value;
 
-      // addWidget uses the object format required in v11/v12 [4]
-      latestGrid.addWidget({
-        w: Math.floor(Math.random() * 3) + 2,
+      // 1. Add the widget with empty content or a placeholder
+      const widget = latestGrid.addWidget({
+        w: 3,
         h: 2,
-        content: `Widget ${widgetCount}`,
+        content: '',
         autoPosition: true
       });
+
+      // 2. Select the grid-stack-item-content element within the newly created widget
+      // The widget object returned by addWidget has an 'el' property representing the DOM element
+      const contentContainer = widget.querySelector('.grid-stack-item-content');
+
+      // 3. Inject the HTML directly into that container
+      if (contentContainer) {
+        contentContainer.innerHTML = userInput || "<div>New Widget</div>";
+      }
+
+      widgetInput.value = '';
     });
 
     document.getElementById('add-bucket').addEventListener('click', createBucket);
