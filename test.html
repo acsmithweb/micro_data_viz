@@ -3,238 +3,556 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dynamic GridStack Buckets</title>
+  <title>Dynamic GridStack Buckets - Theme Color calibrated</title>
+  
+  <!-- CSS Dependencies -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/gridstack@12.1.0/dist/gridstack.min.css" />
+  
   <style>
-    body { background: #f8f9fa; padding: 20px; }
-    .bucket-wrapper { background: #fff; padding: 15px; border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 30px; }
-    .grid-stack { background: #f1f3f5; border: 2px dashed #ced4da; min-height: 100px; }
+    body { background: #f4f6f9; padding: 20px; font-family: system-ui, -apple-system, sans-serif; }
+    .bucket-wrapper { background: #ffffff; padding: 20px; border: 1px solid #e3e6ec; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+    .grid-stack { background: #f8f9fa; border: 2px dashed #ced4da; min-height: 120px; border-radius: 8px; padding: 8px; }
+    
+    /* Elegant Dark Slate Theme for Widget Containers (Fallback background color) */
+    .grid-stack-item-content { 
+      background: #1e2022; 
+      color: #f5f6f7; 
+      display: flex; 
+      flex-direction: column;
+      align-items: flex-start; 
+      justify-content: flex-start; 
+      border-radius: 8px; 
+      position: relative; 
+      overflow: hidden; 
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    /* Styled Buttons with Hover Effects */
+    .remove-widget { 
+      position: absolute; 
+      top: 8px; 
+      right: 8px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      background: rgba(220, 53, 69, 0.2); 
+      border-radius: 50%; 
+      width: 22px; 
+      height: 22px; 
+      line-height: 20px; 
+      text-align: center; 
+      color: #dc3545; 
+      z-index: 10; 
+      transition: all 0.2s ease-in-out;
+    }
+    .remove-widget:hover {
+      background: rgba(220, 53, 69, 1);
+      color: #ffffff;
+      transform: scale(1.1);
+    }
 
-    /* Adjusted alignment to support top-aligned text and overflow scrolling */
-    .grid-stack-item-content { background: #0d6efd; color: white; display: flex; align-items: flex-start; justify-content: flex-start; border-radius: 4px; position: relative; overflow: hidden; }
-    .remove-widget { position: absolute; top: 2px; right: 2px; cursor: pointer; font-size: 12px; background: rgba(0,0,0,0.5); border-radius: 50%; width: 18px; height: 18px; line-height: 16px; text-align: center; color: white; z-index: 10; }
+    .edit-widget { 
+      position: absolute; 
+      top: 8px; 
+      right: 36px; 
+      cursor: pointer; 
+      font-size: 14px; 
+      background: rgba(255, 193, 7, 0.1); 
+      border-radius: 50%; 
+      width: 22px; 
+      height: 22px; 
+      line-height: 20px; 
+      text-align: center; 
+      color: #ffc107; 
+      z-index: 10; 
+      transition: all 0.2s ease-in-out;
+    }
+    .edit-widget:hover {
+      background: rgba(255, 193, 7, 1);
+      color: #1e2022;
+      transform: scale(1.1);
+    }
 
-    /* Added styles to make widget content legible */
-    .widget-body { padding: 15px 10px 10px 10px; width: 100%; height: 100%; overflow: auto; }
-    .widget-body pre { background: rgba(0,0,0,0.2); padding: 10px; border-radius: 4px; color: #f8f9fa; margin: 0; }
+    /* Embedded Color Picker in Widget (Edit Mode) */
+    .widget-color-picker {
+      position: absolute;
+      top: 8px;
+      right: 64px;
+      cursor: pointer;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 0;
+      background: none;
+      overflow: hidden;
+      z-index: 10;
+      transition: all 0.2s ease-in-out;
+    }
+    .widget-color-picker:hover {
+      transform: scale(1.1);
+      border-color: #ffffff;
+    }
+    .widget-color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    .widget-color-picker::-webkit-color-swatch { border: none; border-radius: 50%; }
+    
+    /* Widget Body & Embedded Frame Behavior */
+    .widget-body { 
+      padding: 15px; 
+      width: 100%; 
+      height: 100%; 
+      overflow: auto; 
+    }
+    .widget-body pre { 
+      background: rgba(0, 0, 0, 0.4); 
+      padding: 12px; 
+      border-radius: 6px; 
+      color: #a5d6a7; 
+      margin: 0; 
+      border: 1px solid rgba(255,255,255,0.05);
+    }
+    .widget-body iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      border-radius: 4px;
+      background: #ffffff;
+    }
+
+    /* Seamless Dark Edit Mode Textarea */
+    .edit-area {
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6) !important;
+      color: #f5f6f7 !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      border-radius: 6px;
+      padding: 8px;
+      font-family: monospace;
+      font-size: 14px;
+      resize: none;
+      outline: none;
+    }
+    .edit-area:focus {
+      border-color: #ffc107 !important;
+      box-shadow: 0 0 8px rgba(255, 193, 7, 0.2);
+    }
   </style>
 </head>
-
 <body>
 
+  <!-- Controls Header -->
   <div class="d-flex gap-2 mb-4 p-3 bg-white shadow-sm rounded align-items-center">
     <button class="btn btn-secondary" id="add-bucket">Add New Bucket</button>
-    <!-- Changed to textarea for multi-line inputs and added a format selector -->
     <textarea class="form-control w-25" id="widget-text" rows="1" placeholder="Widget content..."></textarea>
     <select class="form-select w-auto" id="widget-format">
       <option value="html">Rendered HTML</option>
       <option value="markdown">Markdown</option>
       <option value="code">Raw Code (JSON/Ruby/HTML)</option>
     </select>
+    
+    <!-- Mark I: Global Color Selection Tool -->
+    <div class="d-flex align-items-center gap-1 bg-light border p-1 rounded" title="Select starting widget background">
+      <label for="widget-color" class="small text-muted px-1">Color:</label>
+      <input type="color" class="form-control form-control-color p-0 border-0" id="widget-color" value="#1e2022" style="width: 32px; height: 32px; cursor: pointer;">
+    </div>
+
     <button class="btn btn-success" id="add-widget">Add Widget</button>
     <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#jsonModal">JSON Utility</button>
   </div>
 
+  <!-- Dynamic Buckets Target -->
   <div id="main-container"></div>
 
   <!-- JSON Modal -->
-  <div class="modal fade" id="jsonModal" tabindex="-1"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">JSON Import/Export</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><textarea id="json-textarea" class="form-control" style="height:300px; font-family:monospace;"></textarea></div><div class="modal-footer"><button class="btn btn-primary" id="export-json">Export</button><button class="btn btn-success" id="import-json">Import</button></div></div></div></div>
+  <div class="modal fade" id="jsonModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">JSON Import/Export</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <textarea id="json-textarea" class="form-control" style="height:300px; font-family:monospace;"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="export-json">Export</button>
+          <button class="btn btn-success" id="import-json">Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Settings Modal -->
-  <div class="modal fade" id="settingsModal" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Bucket Settings</h5></div><div class="modal-body" id="settings-form-body"></div><div class="modal-footer"><button class="btn btn-primary" id="save-settings">Save Changes</button></div></div></div></div>
+  <div class="modal fade" id="settingsModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Bucket Settings</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body" id="settings-form-body"></div>
+        <div class="modal-footer">
+          <button class="btn btn-primary" id="save-settings">Save Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
+  <!-- Third Party JS Dependencies -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/gridstack@12.1.0/dist/gridstack-all.js"></script>
-  <!-- Added marked.js for Markdown parsing -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js"></script>
 
+  <!-- Modular Application Script -->
   <script>
-    const mainContainer = document.getElementById('main-container');
-    const settingsFormBody = document.getElementById('settings-form-body');
-    const grids = [];
-    let bucketCount = 0;
-    let activeBucketId = null;
-
-    // Define configurable fields and their types
-    const settingsFields = [
-      { id: 'column', type: 'number', label: 'Columns' },
-      { id: 'row', type: 'number', label: 'Rows' },
-      { id: 'margin', type: 'number', label: 'Margin' },
-      { id: 'cellHeight', type: 'number', label: 'Cell Height' },
-      { id: 'cellWidth', type: 'number', label: 'Cell Width' },
-      { id: 'enableResize', type: 'checkbox', label: 'Enable Resize' },
-      { id: 'enableMove', type: 'checkbox', label: 'Enable Move' },
-      { id: 'compact', type: 'select', label: 'Compact', options: ['none', 'compact', 'compactUp'] }
-    ];
-
-    // Generate Modal Fields
-    settingsFields.forEach(f => {
-      const div = document.createElement('div');
-      div.className = 'mb-2';
-      if (f.type === 'checkbox') {
-        div.innerHTML = `<div class="form-check"><input class="form-check-input" type="checkbox" id="set-${f.id}"><label class="form-check-label">${f.label}</label></div>`;
-      } else if (f.type === 'select') {
-        div.innerHTML = `<label>${f.label}</label><select id="set-${f.id}" class="form-select">${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}</select>`;
-      } else {
-        div.innerHTML = `<label>${f.label}</label><input type="number" id="set-${f.id}" class="form-control">`;
-      }
-      settingsFormBody.appendChild(div);
-    });
-
-    // Formatting utilities
-    function escapeHtml(unsafe) {
-      return unsafe
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-    }
-
-    function formatContent(rawContent, formatType) {
-      switch(formatType) {
-        case 'code':
-          return `<pre class="h-100"><code>${escapeHtml(rawContent)}</code></pre>`;
-        case 'markdown':
-          return marked.parse(rawContent);
-        case 'html':
-        default:
-          return rawContent;
-      }
-    }
-
-    function createBucket(name = null, options = { column: 12, row: 0, margin: 5, cellHeight: 25, cellWidth: 0, enableResize: true, enableMove: true, compact: 'none' }) {
-          bucketCount++;
-          const bucketId = `grid-${bucketCount}`;
-          const wrapper = document.createElement('div');
-          wrapper.className = 'bucket-wrapper';
-          wrapper.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center mb-2">
-              <input type="text" class="form-control w-50 fw-bold border-0" value="${name || 'Bucket #' + bucketCount}">
-              <div>
-                <button class="btn btn-sm btn-outline-secondary settings-btn">⚙️</button>
-                <button class="btn btn-sm btn-outline-danger remove-bucket">Delete</button>
-              </div>
-            </div>
-            <div id="${bucketId}" class="grid-stack"></div>
-          `;
-
-          wrapper.querySelector('.settings-btn').onclick = () => {
-            activeBucketId = bucketId;
-            const g = grids.find(x => x.id === bucketId).grid;
-            settingsFields.forEach(f => {
-              const el = document.getElementById(`set-${f.id}`);
-              if (f.type === 'checkbox') el.checked = !!g.opts[f.id];
-              else el.value = g.opts[f.id] ?? '';
-            });
-            new bootstrap.Modal(document.getElementById('settingsModal')).show();
-          };
-
-          wrapper.querySelector('.remove-bucket').onclick = () => {
-            const idx = grids.findIndex(g => g.id === bucketId);
-            grids[idx].grid.destroy(); grids.splice(idx, 1); wrapper.remove();
-          };
-
-          mainContainer.appendChild(wrapper);
-          const grid = GridStack.init({ ...options, acceptWidgets: true }, `#${bucketId}`);
-          grids.push({ id: bucketId, grid });
-        }
-
-    // Updated widget function to accept format logic
-    function addWidgetToGrid(grid, options, rawContent = "New Widget", formatType = "html") {
-        // Embed the raw content and format type into the widget properties for GridStack to track
-        const widgetData = { w: 2, h: 2, ...options, rawContent: rawContent, formatType: formatType };
-        const widget = grid.addWidget(widgetData);
-        const contentEl = widget.querySelector('.grid-stack-item-content');
-
-        const formattedHtml = formatContent(rawContent, formatType);
-
-        // Render formatted content and attach removal logic
-        contentEl.innerHTML = `<div class="widget-body">${formattedHtml}</div><span class="remove-widget">×</span>`;
-        contentEl.querySelector('.remove-widget').onclick = () => grid.removeWidget(widget);
-
-        return widget;
-    }
-
-    document.getElementById('save-settings').addEventListener('click', () => {
-      const g = grids.find(x => x.id === activeBucketId).grid;
-
-      settingsFields.forEach(f => {
-        const el = document.getElementById(`set-${f.id}`);
-        const val = f.type === 'checkbox' ? el.checked : (f.type === 'number' ? parseInt(el.value) : el.value);
-
-        // Update the internal options state
-        g.opts[f.id] = val;
-
-        // Dynamically call the corresponding GridStack method
-        if (typeof g[f.id] === 'function') {
-          g[f.id](val);
-        } else if (f.id === 'enableResize') {
-          g.enableResizable(val);
-        } else if (f.id === 'enableMove') {
-          g.enableMove(val);
-        }
-      });
-
-      bootstrap.Modal.getInstance(document.getElementById('settingsModal')).hide();
-    });
-
-    // Updated UI capture
-    document.getElementById('add-widget').addEventListener('click', () => {
-      if (!grids.length) return alert("Create a bucket first!");
-      const text = document.getElementById('widget-text').value || "New Widget";
-      const format = document.getElementById('widget-format').value;
-      const latestGrid = grids[grids.length - 1].grid;
-
-      addWidgetToGrid(latestGrid, {}, text, format);
-      document.getElementById('widget-text').value = '';
-    });
-
-    document.getElementById('add-bucket').addEventListener('click', () => createBucket());
-
-    // Updated Export
-    document.getElementById('export-json').addEventListener('click', () => {
-      const data = { buckets: grids.map(b => {
-        const options = {};
-        settingsFields.forEach(f => options[f.id] = b.grid.opts[f.id]);
-
-        // Map over the saved nodes to isolate coordinates and our custom formatting tags
-        const serializedWidgets = b.grid.save(false).map(node => ({
-          x: node.x, y: node.y, w: node.w, h: node.h,
-          rawContent: node.rawContent,
-          formatType: node.formatType
-        }));
-
-        return {
-          name: b.grid.el.parentElement.querySelector('input').value,
-          options: options,
-          widgets: serializedWidgets
+    const Formatter = {
+      escapeHtml(unsafe) {
+        return unsafe
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+      },
+      render(rawContent, formatType) {
+        const purificationConfig = {
+          ADD_TAGS: ['iframe'],
+          ADD_ATTR: ['src', 'width', 'height', 'frameborder', 'allow', 'allowfullscreen', 'sandbox']
         };
-      }) };
-      document.getElementById('json-textarea').value = JSON.stringify(data, null, 2);
-    });
 
-    // Updated Import
-    document.getElementById('import-json').addEventListener('click', () => {
-      try {
-        const data = JSON.parse(document.getElementById('json-textarea').value);
-        mainContainer.innerHTML = ''; grids.length = 0; bucketCount = 0;
+        switch (formatType) {
+          case 'code':
+            return `<pre class="h-100"><code>${this.escapeHtml(rawContent)}</code></pre>`;
+          case 'markdown':
+            return typeof DOMPurify !== 'undefined'
+              ? DOMPurify.sanitize(marked.parse(rawContent), purificationConfig)
+              : marked.parse(rawContent);
+          case 'html':
+          default:
+            return typeof DOMPurify !== 'undefined'
+              ? DOMPurify.sanitize(rawContent, purificationConfig)
+              : this.escapeHtml(rawContent);
+        }
+      }
+    };
 
-        data.buckets.forEach(b => {
-          createBucket(b.name, b.options);
-          const gridObj = grids[grids.length - 1].grid;
+    class Bucket {
+      constructor(id, name, options = {}, onSettingsClick, onDeleteClick) {
+        this.id = id;
+        this.name = name || `Bucket #${id}`;
+        this.options = { 
+          column: 12, row: 0, margin: 5, cellHeight: 25, cellWidth: 0, 
+          enableResize: true, enableMove: true, compact: 'none', ...options 
+        };
+        this.domElement = this._createDOM(onSettingsClick, onDeleteClick);
+        this.grid = GridStack.init(
+          { ...this.options, acceptWidgets: true }, 
+          this.domElement.querySelector('.grid-stack')
+        );
+      }
 
-          b.widgets.forEach(w => {
-            const content = w.rawContent || w.content || "New Widget"; // Fallback to content if importing an older layout
-            const format = w.formatType || "html";
-            addWidgetToGrid(gridObj, { x: w.x, y: w.y, w: w.w, h: w.h }, content, format);
+      _createDOM(onSettingsClick, onDeleteClick) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'bucket-wrapper';
+        wrapper.innerHTML = `
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <input type="text" class="form-control w-50 fw-bold border-0 bucket-title" value="${this.name}">
+            <div>
+              <button class="btn btn-sm btn-outline-secondary settings-btn">⚙️</button>
+              <button class="btn btn-sm btn-outline-danger remove-bucket">Delete</button>
+            </div>
+          </div>
+          <div class="grid-stack"></div>
+        `;
+        wrapper.querySelector('.settings-btn').addEventListener('click', () => onSettingsClick(this));
+        wrapper.querySelector('.remove-bucket').addEventListener('click', () => onDeleteClick(this));
+        return wrapper;
+      }
+
+      addWidget(rawContent, formatType, gridOptions = {}) {
+        // Safe baseline initialization of visual coordinates and custom palette parameters
+        const widgetData = { 
+          w: 2, 
+          h: 2, 
+          bgColor: '#1e2022', // Standard dark-slate baseline
+          ...gridOptions, 
+          rawContent, 
+          formatType 
+        };
+        
+        const widgetEl = this.grid.addWidget(widgetData);
+        const contentEl = widgetEl.querySelector('.grid-stack-item-content');
+        
+        // Ensure properties are cleanly bound to the underlying layout metadata
+        if (widgetEl.gridstackNode) {
+          widgetEl.gridstackNode.rawContent = widgetData.rawContent;
+          widgetEl.gridstackNode.formatType = widgetData.formatType;
+          widgetEl.gridstackNode.bgColor = widgetData.bgColor;
+        }
+
+        let isEditing = false;
+
+        const renderViewMode = () => {
+          contentEl.style.backgroundColor = widgetData.bgColor;
+          const formattedHtml = Formatter.render(widgetData.rawContent, widgetData.formatType);
+          contentEl.innerHTML = `
+            <div class="widget-body">${formattedHtml}</div>
+            <span class="edit-widget" title="Edit Content">✏️</span>
+            <span class="remove-widget" title="Delete Widget">×</span>
+          `;
+          bindListeners();
+        };
+
+        const renderEditMode = () => {
+          contentEl.style.backgroundColor = widgetData.bgColor;
+          contentEl.innerHTML = `
+            <div class="widget-body h-100 w-100">
+              <textarea class="edit-area"></textarea>
+            </div>
+            <!-- Mark II: Localized Color Selector in Edit Panel -->
+            <input type="color" class="widget-color-picker" value="${widgetData.bgColor}" title="Adjust chamber background">
+            <span class="edit-widget" title="Save Content">💾</span>
+            <span class="remove-widget" title="Delete Widget">×</span>
+          `;
+          
+          const textarea = contentEl.querySelector('.edit-area');
+          textarea.value = widgetData.rawContent;
+          textarea.focus();
+          
+          bindListeners();
+        };
+
+        const toggleEdit = () => {
+          if (isEditing) {
+            const textarea = contentEl.querySelector('.edit-area');
+            if (textarea) {
+              const updatedValue = textarea.value;
+              widgetData.rawContent = updatedValue;
+              if (widgetEl.gridstackNode) {
+                widgetEl.gridstackNode.rawContent = updatedValue;
+              }
+            }
+            isEditing = false;
+            renderViewMode();
+          } else {
+            isEditing = true;
+            renderEditMode();
+          }
+        };
+
+        const bindListeners = () => {
+          contentEl.querySelector('.remove-widget').addEventListener('click', () => {
+            this.grid.removeWidget(widgetEl);
+          });
+          contentEl.querySelector('.edit-widget').addEventListener('click', toggleEdit);
+          
+          // Watch for real-time background tuning during active editing
+          const picker = contentEl.querySelector('.widget-color-picker');
+          if (picker) {
+            picker.addEventListener('input', (e) => {
+              const chosenColor = e.target.value;
+              widgetData.bgColor = chosenColor;
+              contentEl.style.backgroundColor = chosenColor;
+              if (widgetEl.gridstackNode) {
+                widgetEl.gridstackNode.bgColor = chosenColor;
+              }
+            });
+          }
+        };
+
+        renderViewMode();
+        return widgetEl;
+      }
+
+      exportData() {
+        const titleInput = this.domElement.querySelector('.bucket-title');
+        return {
+          name: titleInput ? titleInput.value : this.name,
+          options: { ...this.grid.opts },
+          widgets: this.grid.save(false).map(node => ({
+            x: node.x, y: node.y, w: node.w, h: node.h,
+            rawContent: node.rawContent, 
+            formatType: node.formatType,
+            bgColor: node.bgColor || '#1e2022'
+          }))
+        };
+      }
+
+      destroy() {
+        this.grid.destroy();
+        this.domElement.remove();
+      }
+    }
+
+    class App {
+      constructor() {
+        this.buckets = [];
+        this.bucketCounter = 0;
+        this.activeBucket = null;
+        this.container = document.getElementById('main-container');
+        
+        this._initSettingsFields();
+        this._initModals();
+        this._bindGlobalEvents();
+      }
+
+      _initSettingsFields() {
+        this.settingsFormBody = document.getElementById('settings-form-body');
+        this.settingsFields = [
+          { id: 'column', type: 'number', label: 'Columns' },
+          { id: 'row', type: 'number', label: 'Rows' },
+          { id: 'margin', type: 'number', label: 'Margin' },
+          { id: 'cellHeight', type: 'number', label: 'Cell Height' },
+          { id: 'cellWidth', type: 'number', label: 'Cell Width' },
+          { id: 'enableResize', type: 'checkbox', label: 'Enable Resize' },
+          { id: 'enableMove', type: 'checkbox', label: 'Enable Move' },
+          { id: 'compact', type: 'select', label: 'Compact', options: ['none', 'compact', 'compactUp'] }
+        ];
+
+        this.settingsFormBody.innerHTML = '';
+        this.settingsFields.forEach(f => {
+          const div = document.createElement('div');
+          div.className = 'mb-2';
+          if (f.type === 'checkbox') {
+            div.innerHTML = `<div class="form-check">
+              <input class="form-check-input" type="checkbox" id="set-${f.id}">
+              <label class="form-check-label" for="set-${f.id}">${f.label}</label>
+            </div>`;
+          } else if (f.type === 'select') {
+            div.innerHTML = `<label class="form-label" for="set-${f.id}">${f.label}</label>
+              <select id="set-${f.id}" class="form-select">
+                ${f.options.map(o => `<option value="${o}">${o}</option>`).join('')}
+              </select>`;
+          } else {
+            div.innerHTML = `<label class="form-label" for="set-${f.id}">${f.label}</label>
+              <input type="number" id="set-${f.id}" class="form-control">`;
+          }
+          this.settingsFormBody.appendChild(div);
+        });
+      }
+
+      _initModals() {
+        this.settingsModal = new bootstrap.Modal(document.getElementById('settingsModal'));
+        this.jsonModal = new bootstrap.Modal(document.getElementById('jsonModal'));
+      }
+
+      openSettings(bucket) {
+        this.activeBucket = bucket;
+        const g = bucket.grid;
+        this.settingsFields.forEach(f => {
+          const el = document.getElementById(`set-${f.id}`);
+          if (!el) return;
+          if (f.type === 'checkbox') {
+            el.checked = !!g.opts[f.id];
+          } else {
+            el.value = g.opts[f.id] ?? '';
+          }
+        });
+        this.settingsModal.show();
+      }
+
+      saveSettings() {
+        if (!this.activeBucket) return;
+        const g = this.activeBucket.grid;
+        this.settingsFields.forEach(f => {
+          const el = document.getElementById(`set-${f.id}`);
+          if (!el) return;
+          const val = f.type === 'checkbox' 
+            ? el.checked 
+            : (f.type === 'number' ? parseInt(el.value, 10) : el.value);
+          
+          g.opts[f.id] = val;
+          
+          if (typeof g[f.id] === 'function') {
+            g[f.id](val);
+          } else if (f.id === 'enableResize') {
+            g.enableResizable(val);
+          } else if (f.id === 'enableMove') {
+            g.enableMove(val);
+          }
+        });
+        this.settingsModal.hide();
+      }
+
+      addBucket(name = null, options = {}) {
+        this.bucketCounter++;
+        const id = this.bucketCounter;
+        const bucket = new Bucket(id, name, options, (b) => this.openSettings(b), (b) => this.removeBucket(b));
+        this.buckets.push(bucket);
+        this.container.appendChild(bucket.domElement);
+        return bucket;
+      }
+
+      removeBucket(bucket) {
+        const idx = this.buckets.indexOf(bucket);
+        if (idx !== -1) {
+          bucket.destroy();
+          this.buckets.splice(idx, 1);
+        }
+      }
+
+      addDynamicWidget() {
+        if (this.buckets.length === 0) {
+          alert("Create a bucket first!");
+          return;
+        }
+        const textEl = document.getElementById('widget-text');
+        const formatEl = document.getElementById('widget-format');
+        const colorEl = document.getElementById('widget-color');
+        
+        const text = textEl.value || "New Widget";
+        const format = formatEl.value;
+        const color = colorEl ? colorEl.value : '#1e2022';
+
+        // Direct injection of visual attributes into creation pipeline
+        this.buckets[this.buckets.length - 1].addWidget(text, format, { bgColor: color });
+        textEl.value = '';
+      }
+
+      exportJSON() {
+        const data = { buckets: this.buckets.map(b => b.exportData()) };
+        document.getElementById('json-textarea').value = JSON.stringify(data, null, 2);
+      }
+
+      importJSON(jsonString) {
+        const data = JSON.parse(jsonString);
+        this.clearAll();
+        data.buckets.forEach(bData => {
+          const bucket = this.addBucket(bData.name, bData.options);
+          bData.widgets.forEach(w => {
+            bucket.addWidget(
+              w.rawContent || w.content || "New Widget", 
+              w.formatType || "html", 
+              { x: w.x, y: w.y, w: w.w, h: w.h, bgColor: w.bgColor || '#1e2022' }
+            );
           });
         });
-      } catch (e) { alert("Import failed: " + e.message); }
-    });
+      }
 
-    createBucket();
-    </script>
-  </body>
+      clearAll() {
+        [...this.buckets].forEach(b => this.removeBucket(b));
+        this.bucketCounter = 0;
+      }
+
+      _bindGlobalEvents() {
+        document.getElementById('add-bucket').addEventListener('click', () => this.addBucket());
+        document.getElementById('add-widget').addEventListener('click', () => this.addDynamicWidget());
+        document.getElementById('save-settings').addEventListener('click', () => this.saveSettings());
+        document.getElementById('export-json').addEventListener('click', () => this.exportJSON());
+        document.getElementById('import-json').addEventListener('click', () => {
+          try {
+            this.importJSON(document.getElementById('json-textarea').value);
+          } catch (e) {
+            alert("Import failed: " + e.message);
+          }
+        });
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      window.app = new App();
+      window.app.addBucket();
+    });
+  </script>
+</body>
 </html>
