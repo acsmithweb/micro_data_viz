@@ -138,6 +138,29 @@
       border-color: #ffc107 !important;
       box-shadow: 0 0 8px rgba(255, 193, 7, 0.2);
     }
+
+        /* Styled Digestion Trigger with Hover Effects */
+    .digest-widget { 
+      position: absolute; 
+      top: 8px; 
+      right: 64px; /* Positioned cleanly adjacent to the Edit icon */
+      cursor: pointer; 
+      font-size: 14px; 
+      background: rgba(40, 167, 69, 0.1); 
+      border-radius: 50%; 
+      width: 22px; 
+      height: 22px; 
+      line-height: 20px; 
+      text-align: center; 
+      color: #28a745; /* Green color representing clean structural harvesting */
+      z-index: 10; 
+      transition: all 0.2s ease-in-out;
+    }
+    .digest-widget:hover {
+      background: rgba(40, 167, 69, 1);
+      color: #ffffff;
+      transform: scale(1.1);
+    }
   </style>
 </head>
 <body>
@@ -236,6 +259,36 @@
       }
     };
 
+    const Digester = {
+      digest(rawContent, formatType) {
+        if (!rawContent || typeof rawContent !== 'string') return [];
+        
+        let fragments = [];
+        
+        if (formatType === 'code') {
+          // Identifies top-level JS/Python declarations at the start of a line
+          const splitRegex = /(?=^function\s+\w+|^async\s+function\s+\w+|^class\s+\w+|^def\s+\w+|^const\s+\w+\s*=\s*(?:\([^)]*\)|[a-zA-Z_$][\w$]*)\s*=>)/m;
+          
+          fragments = rawContent.split(splitRegex)
+            .map(f => f.trim())
+            .filter(f => f.length > 0);
+        } else if (formatType === 'markdown') {
+          // Splits before any standard markdown header level (H1 to H6)
+          const splitRegex = /(?=^#{1,6}\s+)/m;
+          fragments = rawContent.split(splitRegex)
+            .map(f => f.trim())
+            .filter(f => f.length > 0);
+        } else {
+          // Fallback split for generic HTML or text (by paragraph double-newline)
+          fragments = rawContent.split(/\n\s*\n/)
+            .map(f => f.trim())
+            .filter(f => f.length > 0);
+        }
+        
+        return fragments;
+      }
+    };
+
     class Bucket {
       constructor(id, name, options = {}, onSettingsClick, onDeleteClick) {
         this.id = id;
@@ -270,11 +323,10 @@
       }
 
       addWidget(rawContent, formatType, gridOptions = {}) {
-        // Safe baseline initialization of visual coordinates and custom palette parameters
         const widgetData = { 
           w: 2, 
           h: 2, 
-          bgColor: '#1e2022', // Standard dark-slate baseline
+          bgColor: '#1e2022', 
           ...gridOptions, 
           rawContent, 
           formatType 
@@ -283,7 +335,6 @@
         const widgetEl = this.grid.addWidget(widgetData);
         const contentEl = widgetEl.querySelector('.grid-stack-item-content');
         
-        // Ensure properties are cleanly bound to the underlying layout metadata
         if (widgetEl.gridstackNode) {
           widgetEl.gridstackNode.rawContent = widgetData.rawContent;
           widgetEl.gridstackNode.formatType = widgetData.formatType;
@@ -297,6 +348,7 @@
           const formattedHtml = Formatter.render(widgetData.rawContent, widgetData.formatType);
           contentEl.innerHTML = `
             <div class="widget-body">${formattedHtml}</div>
+            <span class="digest-widget" title="Digest Content">✂️</span>
             <span class="edit-widget" title="Edit Content">✏️</span>
             <span class="remove-widget" title="Delete Widget">×</span>
           `;
@@ -309,8 +361,7 @@
             <div class="widget-body h-100 w-100">
               <textarea class="edit-area"></textarea>
             </div>
-            <!-- Mark II: Localized Color Selector in Edit Panel -->
-            <input type="color" class="widget-color-picker" value="${widgetData.bgColor}" title="Adjust chamber background">
+            <input type="color" class="widget-color-picker" value="${widgetData.bgColor}" title="Adjust background color">
             <span class="edit-widget" title="Save Content">💾</span>
             <span class="remove-widget" title="Delete Widget">×</span>
           `;
@@ -344,9 +395,37 @@
           contentEl.querySelector('.remove-widget').addEventListener('click', () => {
             this.grid.removeWidget(widgetEl);
           });
-          contentEl.querySelector('.edit-widget').addEventListener('click', toggleEdit);
           
-          // Watch for real-time background tuning during active editing
+          const editBtn = contentEl.querySelector('.edit-widget');
+          if (editBtn) {
+            editBtn.addEventListener('click', toggleEdit);
+          }
+          
+          // Localized Digestion Trigger logic
+          const digestBtn = contentEl.querySelector('.digest-widget');
+          if (digestBtn) {
+            digestBtn.addEventListener('click', () => {
+              const fragments = Digester.digest(widgetData.rawContent, widgetData.formatType);
+              
+              if (fragments.length <= 1) {
+                alert("This block cannot be divided further. No natural boundaries (functions or headers) were detected.");
+                return;
+              }
+              
+              // Remove the parent container from the layout grid
+              this.grid.removeWidget(widgetEl);
+              
+              // Map the harvested shards back into the bucket as smaller widgets
+              fragments.forEach(frag => {
+                this.addWidget(frag, widgetData.formatType, {
+                  bgColor: widgetData.bgColor,
+                  w: widgetData.w,
+                  h: widgetData.h
+                });
+              });
+            });
+          }
+          
           const picker = contentEl.querySelector('.widget-color-picker');
           if (picker) {
             picker.addEventListener('input', (e) => {
