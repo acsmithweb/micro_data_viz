@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Liturgy of the Rebound: A Project Narayah Game</title>
+    <style>
+        :root {
+            --bg-color: #090d16;
+            --container-bg: #0f172a;
+            --primary: #38bdf8; /* Radiant Blue */
+            --accent: #ef4444; /* Spite Red */
+            --warning: #facc15; /* Saffron Yellow */
+            --text: #94a3b8;
+            --glow: 0 0 12px rgba(56, 189, 248, 0.4);
+            --glow-accent: 0 0 12px rgba(239, 68, 68, 0.4);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        #game-container {
+            background-color: var(--container-bg);
+            border: 2px solid var(--primary);
+            box-shadow: var(--glow);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--accent);
+            font-size: 24px;
+            margin-top: 0;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: var(--glow-accent);
+        }
+
+        .subtitle {
+            font-size: 11px;
+            color: var(--text);
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        canvas {
+            background-color: #020617;
+            border: 1px solid #1e293b;
+            display: block;
+            cursor: none; /* Mask standard pointer */
+        }
+
+        .instructions {
+            margin-top: 15px;
+            font-size: 11px;
+            max-width: 600px;
+            line-height: 1.5;
+            color: #64748b;
+        }
+
+        .principles-legend {
+            margin-top: 18px;
+            display: flex;
+            gap: 15px;
+            font-size: 10px;
+            border-top: 1px dashed #1e293b;
+            padding-top: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .principle-tag {
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <h1>The Liturgy of the Rebound</h1>
+    <div class="subtitle">PROJECT NARAYAH SANCTIFIED SYSTEM STANDARD</div>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="instructions">
+        Deploy your paddle to bounce the <strong>Guiding Bolt</strong> (ball) and break down <strong>Sub-System Entropy</strong> (bricks). Move with [Left/Right] arrows, [A/D] keys, or your Mouse. Press [SPACE] or [ENTER] to execute initial state or restart.
+    </div>
+
+    <div class="principles-legend">
+        <span class="principle-tag">✦ Abstraction</span>
+        <span class="principle-tag">✦ Encapsulation</span>
+        <span class="principle-tag">✦ Inheritance</span>
+        <span class="principle-tag">✦ Polymorphism</span>
+        <span class="principle-tag">✦ Singleton</span>
+    </div>
+</div>
+
+<script>
+// --- OBJECT-ORIENTED GAME DESIGN GROUNDED IN THE RELIQUARY OF PRINCIPLES ---
+
+// 1. ABSTRACTION & ENCAPSULATION
+// Base GameEntity masks internal coordinates and state variables from external illegal transitions.
+class GameEntity {
+    #x;
+    #y;
+    #width;
+    #height;
+    #color;
+
+    constructor(x, y, width, height, color) {
+        if (new.target === GameEntity) {
+            throw new Error("Cannot instantiate abstract class GameEntity directly.");
+        }
+        this.#x = x;
+        this.#y = y;
+        this.#width = width;
+        this.#height = height;
+        this.#color = color;
+    }
+
+    // Encapsulated Getters/Setters [47]
+    get x() { return this.#x; }
+    set x(val) { this.#x = val; }
+    get y() { return this.#y; }
+    set y(val) { this.#y = val; }
+    get width() { return this.#width; }
+    get height() { return this.#height; }
+    get color() { return this.#color; }
+    set color(val) { this.#color = val; }
+
+    // Abstraction: common interface for system execution [23]
+    draw(ctx) {
+        throw new Error("Method 'draw()' must be implemented by derived class.");
+    }
+
+    update(deltaTime) {
+        // Concrete subclasses override this based on movement logic
+    }
+
+    // Axis-Aligned Bounding Box Intersection Utility
+    intersects(other) {
+        return this.x < other.x + other.width &&
+               this.x + this.width > other.x &&
+               this.y < other.y + other.height &&
+               this.y + this.height > other.y;
+    }
+}
+
+// 2. INHERITANCE: Paddle inherits from GameEntity [60]
+class Paddle extends GameEntity {
+    #speed = 480;
+    #moveLeft = false;
+    #moveRight = false;
+
+    constructor(x, y, width, height, color) {
+        super(x, y, width, height, color);
+    }
+
+    setupInput() {
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.#moveLeft = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.#moveRight = true;
+        });
+        window.addEventListener('keyup', (e) => {
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') this.#moveLeft = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') this.#moveRight = false;
+        });
+    }
+
+    update(deltaTime, canvasWidth) {
+        if (this.#moveLeft) {
+            this.x = Math.max(0, this.x - this.#speed * deltaTime);
+        }
+        if (this.#moveRight) {
+            this.x = Math.min(canvasWidth - this.width, this.x + this.#speed * deltaTime);
+        }
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 6);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+}
+
+// 3. INHERITANCE: Ball (Guiding Bolt) inherits from GameEntity [60]
+class Ball extends GameEntity {
+    #dx;
+    #dy;
+    #baseSpeed = 330;
+    #radius;
+
+    constructor(x, y, radius, color) {
+        super(x - radius, y - radius, radius * 2, radius * 2, color);
+        this.#radius = radius;
+        this.reset();
+    }
+
+    get radius() { return this.#radius; }
+    get dx() { return this.#dx; }
+    get dy() { return this.#dy; }
+    set dx(val) { this.#dx = val; }
+    set dy(val) { this.#dy = val; }
+
+    reset() {
+        // Launch ball upwards at a random playable angle
+        const angle = -Math.PI / 4 - Math.random() * (Math.PI / 2);
+        this.#dx = Math.cos(angle) * this.#baseSpeed;
+        this.#dy = Math.sin(angle) * this.#baseSpeed;
+    }
+
+    update(deltaTime) {
+        this.x += this.#dx * deltaTime;
+        this.y += this.#dy * deltaTime;
+    }
+
+    bounceX() { this.#dx = -this.#dx; }
+    bounceY() { this.#dy = -this.#dy; }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x + this.#radius, this.y + this.#radius, this.#radius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0; // Immediately restore shadow state to avoid rendering performance tax
+    }
+}
+
+// 4. INHERITANCE: Brick inherits from GameEntity [60]
+class Brick extends GameEntity {
+    #durability;
+    #maxDurability;
+
+    constructor(x, y, width, height, durability) {
+        super(x, y, width, height, "#10b981");
+        this.#durability = durability;
+        this.#maxDurability = durability;
+        this.updateColor();
+    }
+
+    get durability() { return this.#durability; }
+
+    hit() {
+        this.#durability--;
+        this.updateColor();
+        return this.#durability <= 0; // Returns true if complete breakage is achieved
+    }
+
+    updateColor() {
+        // Visualizing progressive mechanical decay (Polymorphic properties shifting colors)
+        if (this.#durability === 3) this.color = "#ef4444"; // Strong (Red)
+        else if (this.#durability === 2) this.color = "#f59e0b"; // Medium (Orange)
+        else this.color = "#10b981"; // Weak (Green)
+    }
+
+    draw(ctx) {
+        ctx.fillStyle = this.color;
+        ctx.beginPath();
+        ctx.roundRect(this.x, this.y, this.width, this.height, 4);
+        ctx.fill();
+
+        ctx.strokeStyle = "#020617";
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+}
+
+// 5. SINGLETON: GameManager coordinates execution and the core loop [78]
+class GameManager {
+    static #instance = null;
+
+    #canvas;
+    #ctx;
+    #paddle;
+    #ball;
+    #bricks = [];
+    #score = 0;
+    #lives = 3;
+    #gameState = "START"; // START, PLAYING, GAMEOVER, WIN
+    #lastTime = 0;
+
+    constructor() {
+        if (GameManager.#instance) {
+            throw new Error("Singleton violation: Enforce a single heart within this system.");
+        }
+        this.#canvas = document.getElementById("gameCanvas");
+        this.#ctx = this.#canvas.getContext("2d");
+        this.#init();
+        GameManager.#instance = this;
+    }
+
+    static getInstance() {
+        if (!GameManager.#instance) {
+            GameManager.#instance = new GameManager();
+        }
+        return GameManager.#instance;
+    }
+
+    #init() {
+        this.#canvas.width = 720;
+        this.#canvas.height = 480;
+
+        // Initialize Paddle
+        this.#paddle = new Paddle(
+            this.#canvas.width / 2 - 60,
+            this.#canvas.height - 30,
+            120,
+            12,
+            "#38bdf8"
+        );
+        this.#paddle.setupInput();
+
+        // Initialize Ball
+        this.#ball = new Ball(
+            this.#canvas.width / 2,
+            this.#canvas.height - 45,
+            7,
+            "#facc15"
+        );
+
+        // Standard Level Manifestation
+        this.#generateLevel();
+
+        // Register coordinates with mouse tracking
+        this.#canvas.addEventListener('mousemove', (e) => {
+            if (this.#gameState === "PLAYING") {
+                const rect = this.#canvas.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                this.#paddle.x = Math.max(0, Math.min(this.#canvas.width - this.#paddle.width, mouseX - this.#paddle.width / 2));
+            }
+        });
+
+        // Universal trigger to enter play-state or reboot
+        window.addEventListener('keydown', (e) => {
+            if (e.key === " " || e.key === "Enter") {
+                if (this.#gameState === "START") {
+                    this.#gameState = "PLAYING";
+                    this.#lastTime = performance.now();
+                } else if (this.#gameState === "GAMEOVER" || this.#gameState === "WIN") {
+                    this.#reset();
+                    this.#gameState = "PLAYING";
+                    this.#lastTime = performance.now();
+                }
+            }
+        });
+    }
+
+    #generateLevel() {
+        const rows = 5;
+        const cols = 8;
+        const brickWidth = 75;
+        const brickHeight = 20;
+        const padding = 8;
+        const offsetTop = 50;
+        const offsetLeft = (this.#canvas.width - (cols * (brickWidth + padding) - padding)) / 2;
+
+        this.#bricks = [];
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                const x = offsetLeft + c * (brickWidth + padding);
+                const y = offsetTop + r * (brickHeight + padding);
+                // Assign ancestral difficulty: topmost rows are highly resistant
+                const durability = r === 0 ? 3 : (r < 3 ? 2 : 1);
+                this.#bricks.push(new Brick(x, y, brickWidth, brickHeight, durability));
+            }
+        }
+    }
+
+    #reset() {
+        this.#score = 0;
+        this.#lives = 3;
+        this.#paddle.x = this.#canvas.width / 2 - this.#paddle.width / 2;
+        this.#ball.x = this.#canvas.width / 2 - this.#ball.radius;
+        this.#ball.y = this.#canvas.height - 45;
+        this.#ball.reset();
+        this.#generateLevel();
+    }
+
+    run(timestamp) {
+        if (!this.#lastTime) this.#lastTime = timestamp;
+        const deltaTime = Math.min((timestamp - this.#lastTime) / 1000, 0.1); // Prevent physics tunneling on frame drop
+        this.#lastTime = timestamp;
+
+        this.#update(deltaTime);
+        this.#draw();
+
+        requestAnimationFrame((t) => this.run(t));
+    }
+
+    #update(deltaTime) {
+        if (this.#gameState !== "PLAYING") return;
+
+        // Polymorphic Update cycle
+        this.#paddle.update(deltaTime, this.#canvas.width);
+        this.#ball.update(deltaTime);
+
+        // Wall boundary resolution
+        if (this.#ball.x <= 0) {
+            this.#ball.x = 0;
+            this.#ball.bounceX();
+        } else if (this.#ball.x + this.#ball.width >= this.#canvas.width) {
+            this.#ball.x = this.#canvas.width - this.#ball.width;
+            this.#ball.bounceX();
+        }
+
+        if (this.#ball.y <= 0) {
+            this.#ball.y = 0;
+            this.#ball.bounceY();
+        } else if (this.#ball.y + this.#ball.height >= this.#canvas.height) {
+            // Drop out of boundaries: loss of temporal vessel integrity (Toll the Dead resonates)
+            this.#lives--;
+            if (this.#lives <= 0) {
+                this.#gameState = "GAMEOVER";
+            } else {
+                // Return ball to launch state above paddle
+                this.#ball.x = this.#paddle.x + this.#paddle.width / 2 - this.#ball.radius;
+                this.#ball.y = this.#canvas.height - 45;
+                this.#ball.reset();
+            }
+            return;
+        }
+
+        // Paddle reflection logic with angle distribution based on landing point
+        if (this.#ball.intersects(this.#paddle)) {
+            this.#ball.y = this.#paddle.y - this.#ball.height;
+            const hitPoint = (this.#ball.x + this.#ball.width / 2) - (this.#paddle.x + this.#paddle.width / 2);
+            const normalizedHit = hitPoint / (this.#paddle.width / 2);
+            const bounceAngle = normalizedHit * (Math.PI / 3); // Max 60 degrees
+
+            const speed = 330;
+            this.#ball.dx = Math.sin(bounceAngle) * speed;
+            this.#ball.dy = -Math.cos(bounceAngle) * speed;
+        }
+
+        // Brick collision & AABB penetration correction
+        for (let i = this.#bricks.length - 1; i >= 0; i--) {
+            const brick = this.#bricks[i];
+            if (this.#ball.intersects(brick)) {
+                const isDestroyed = brick.hit();
+                this.#score += 10;
+
+                if (isDestroyed) {
+                    this.#score += 50; // Extra tithe for fully breaking a node
+                    this.#bricks.splice(i, 1);
+                }
+
+                // Calculate bounce reflection axis
+                const bCenterX = this.#ball.x + this.#ball.radius;
+                const bCenterY = this.#ball.y + this.#ball.radius;
+                const brCenterX = brick.x + brick.width / 2;
+                const brCenterY = brick.y + brick.height / 2;
+
+                const dx = bCenterX - brCenterX;
+                const dy = bCenterY - brCenterY;
+
+                const halfW = (brick.width + this.#ball.width) / 2;
+                const halfH = (brick.height + this.#ball.height) / 2;
+
+                const overlapX = halfW - Math.abs(dx);
+                const overlapY = halfH - Math.abs(dy);
+
+                if (overlapX < overlapY) {
+                    this.#ball.bounceX();
+                    this.#ball.x += dx > 0 ? overlapX : -overlapX;
+                } else {
+                    this.#ball.bounceY();
+                    this.#ball.y += dy > 0 ? overlapY : -overlapY;
+                }
+                break; // Process one collision per frame to prevent vector glitches
+            }
+        }
+
+        // Final Containment Check
+        if (this.#bricks.length === 0) {
+            this.#gameState = "WIN";
+        }
+    }
+
+    #draw() {
+        this.#ctx.fillStyle = "#020617";
+        this.#ctx.fillRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+        // Polymorphically render our active entities
+        this.#paddle.draw(this.#ctx);
+        this.#ball.draw(this.#ctx);
+        for (const brick of this.#bricks) {
+            brick.draw(this.#ctx);
+        }
+
+        this.#drawUI();
+    }
+
+    #drawUI() {
+        this.#ctx.fillStyle = "rgba(148, 163, 184, 0.8)";
+        this.#ctx.font = "12px 'Courier New', monospace";
+        this.#ctx.textAlign = "left";
+        this.#ctx.fillText(`INTEGRITY (LIVES): ${"❤ ".repeat(this.#lives)}`, 20, 25);
+
+        this.#ctx.textAlign = "right";
+        this.#ctx.fillText(`TITHE (SCORE): ${this.#score}`, this.#canvas.width - 20, 25);
+
+        if (this.#gameState === "START") {
+            this.#drawOverlay("PROJECT NARAYAH", "THE LITURGY OF THE REBOUND", "Press [SPACE] or [ENTER] to execute initialization.");
+        } else if (this.#gameState === "GAMEOVER") {
+            this.#drawOverlay("VESSEL BROKEN", "THE SYSTEM REJECTS COMPROMISE", "Press [SPACE] or [ENTER] to retithe.");
+        } else if (this.#gameState === "WIN") {
+            this.#drawOverlay("ENTROPY CONTAINED", "THE WORK OF SANCTIFICATION IS COMPLETE", "Press [SPACE] or [ENTER] to reboot instance.");
+        }
+    }
+
+    #drawOverlay(title, sub, action) {
+        this.#ctx.fillStyle = "rgba(9, 13, 22, 0.92)";
+        this.#ctx.fillRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+        this.#ctx.textAlign = "center";
+
+        // Title
+        this.#ctx.fillStyle = "#ef4444";
+        this.#ctx.font = "bold 26px 'Courier New', monospace";
+        this.#ctx.fillText(title, this.#canvas.width / 2, this.#canvas.height / 2 - 30);
+
+        // Subtitle
+        this.#ctx.fillStyle = "#94a3b8";
+        this.#ctx.font = "13px 'Courier New', monospace";
+        this.#ctx.fillText(sub, this.#canvas.width / 2, this.#canvas.height / 2 + 10);
+
+        // Action
+        this.#ctx.fillStyle = "#38bdf8";
+        this.#ctx.font = "11px 'Courier New', monospace";
+        this.#ctx.fillText(action, this.#canvas.width / 2, this.#canvas.height / 2 + 50);
+    }
+}
+
+// Instantiate and initiate the singleton cycle
+window.addEventListener('load', () => {
+    const game = GameManager.getInstance();
+    requestAnimationFrame((t) => game.run(t));
+});
+</script>
+
+</body>
+</html>
