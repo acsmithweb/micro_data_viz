@@ -1,0 +1,1759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Liturgy of the Rebound: Stonesoul Edition</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=IM+Fell+English+SC&family=VT323&display=swap');
+
+        :root {
+            --bg-color: #060608;
+            --stone-panel: #111215;
+            --border-glow: #3a1515;
+            --primary-glow: #ff3333;       /* Riker's red albino eyes */
+            --secondary-glow: #e6b800;     /* Broken, subverted divine gold */
+            --necrotic-glow: #9b59b6;      /* Toll the Dead amethyst */
+            --void-glow: #2c3e50;          /* Iron Monolith steel */
+            --text-color: #e5e5e7;
+            --font-gothic: 'Cinzel', serif;
+            --font-script: 'IM Fell English SC', serif;
+            --font-retro: 'VT323', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            background-image: radial-gradient(circle, #131419 0%, #060608 100%);
+            color: var(--text-color);
+            font-family: var(--font-gothic);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Container styling styled as an ancient stone altar */
+        .altar-container {
+            display: flex;
+            gap: 20px;
+            background: var(--stone-panel);
+            padding: 24px;
+            border-radius: 12px;
+            border: 2px solid #2d1a1a;
+            box-shadow: 0 0 40px rgba(255, 51, 51, 0.08),
+                        inset 0 0 20px rgba(0, 0, 0, 0.8);
+            position: relative;
+            max-width: 1050px;
+            width: 95%;
+        }
+
+        .altar-container::before {
+            content: '';
+            position: absolute;
+            top: -4px; left: -4px; right: -4px; bottom: -4px;
+            border: 1px solid #ff333322;
+            border-radius: 16px;
+            pointer-events: none;
+        }
+
+        /* Main Game Screen */
+        .game-viewport {
+            position: relative;
+            background-color: #0c0d10;
+            border: 3px solid #24252a;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.9);
+        }
+
+        #gameCanvas {
+            display: block;
+            background-color: transparent;
+        }
+
+        /* Side Reliquary panel for HUD & Ritual details */
+        .reliquary-sidebar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            border-left: 2px solid #24252a;
+            padding-left: 20px;
+            min-width: 260px;
+        }
+
+        .reliquary-header {
+            text-align: center;
+            border-bottom: 1px dashed #442222;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+
+        .reliquary-header h1 {
+            font-family: var(--font-script);
+            font-size: 1.8rem;
+            margin: 0;
+            color: var(--text-color);
+            text-shadow: 0 0 8px rgba(255, 51, 51, 0.5);
+            letter-spacing: 1px;
+        }
+
+        .reliquary-header p {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin: 4px 0 0;
+            color: #888992;
+        }
+
+        .stat-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: #0d0e12;
+            padding: 10px 14px;
+            border-left: 3px solid var(--primary-glow);
+            border-radius: 0 4px 4px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .stat-card.necrotic {
+            border-left-color: var(--necrotic-glow);
+        }
+
+        .stat-card.radiant {
+            border-left-color: var(--secondary-glow);
+        }
+
+        .stat-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888992;
+        }
+
+        .stat-value {
+            font-family: var(--font-retro);
+            font-size: 1.8rem;
+            color: var(--text-color);
+            text-shadow: 0 0 6px var(--primary-glow);
+            line-height: 1;
+        }
+
+        .stat-card.necrotic .stat-value {
+            text-shadow: 0 0 6px var(--necrotic-glow);
+        }
+
+        .stat-card.radiant .stat-value {
+            text-shadow: 0 0 6px var(--secondary-glow);
+        }
+
+        /* Powerup status meters */
+        .active-boons {
+            background: #0d0e12;
+            border: 1px solid #1a1b22;
+            padding: 12px;
+            border-radius: 6px;
+            flex-grow: 1;
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .active-boons h3 {
+            font-size: 0.75rem;
+            margin: 0 0 6px 0;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: #888992;
+            border-bottom: 1px dashed #24252a;
+            padding-bottom: 4px;
+        }
+
+        .boon-meter {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .boon-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .boon-bar {
+            height: 6px;
+            background: #191b22;
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid #24252a;
+        }
+
+        .boon-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--primary-glow);
+            box-shadow: 0 0 8px var(--primary-glow);
+            transition: width 0.1s linear;
+        }
+
+        .clerical-instructions {
+            font-size: 0.72rem;
+            line-height: 1.4;
+            color: #6a6b75;
+            border-top: 1px solid #24252a;
+            padding-top: 12px;
+            font-style: italic;
+        }
+
+        .clerical-instructions strong {
+            color: var(--text-color);
+        }
+
+        /* Overlay text styles for Pause/Start/Death */
+        .viewport-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(6, 6, 8, 0.85);
+            backdrop-filter: blur(4px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 30px;
+            z-index: 10;
+            transition: opacity 0.3s ease;
+        }
+
+        .viewport-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .overlay-title {
+            font-family: var(--font-script);
+            font-size: 2.8rem;
+            color: var(--text-color);
+            margin: 0 0 10px 0;
+            text-shadow: 0 0 15px var(--primary-glow);
+        }
+
+        .overlay-subtitle {
+            font-size: 0.85rem;
+            letter-spacing: 3px;
+            color: var(--secondary-glow);
+            text-transform: uppercase;
+            margin-bottom: 24px;
+            max-width: 400px;
+            line-height: 1.6;
+        }
+
+        .overlay-btn {
+            background: transparent;
+            color: var(--text-color);
+            border: 2px solid var(--primary-glow);
+            padding: 12px 30px;
+            font-family: var(--font-gothic);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(255, 51, 51, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .overlay-btn:hover {
+            background: var(--primary-glow);
+            color: var(--bg-color);
+            box-shadow: 0 0 20px var(--primary-glow);
+            font-weight: bold;
+        }
+
+        /* Audio Indicator toggle */
+        .audio-toggle {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: transparent;
+            border: 1px solid #442222;
+            color: #888992;
+            font-family: var(--font-gothic);
+            font-size: 0.65rem;
+            padding: 4px 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            z-index: 20;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .audio-toggle.active {
+            border-color: var(--primary-glow);
+            color: var(--primary-glow);
+            box-shadow: 0 0 8px rgba(255,51,51,0.2);
+        }
+
+        @media (max-width: 800px) {
+            .altar-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            .reliquary-sidebar {
+                border-left: none;
+                border-top: 2px solid #24252a;
+                padding-left: 0;
+                padding-top: 20px;
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="altar-container">
+        <!-- Audio Synth State Controller -->
+        <button id="audioToggleBtn" class="audio-toggle">Necrosis Silence</button>
+
+        <!-- Main Screen -->
+        <div class="game-viewport" id="viewport">
+
+            <!-- Dynamic Interaction Overlay -->
+            <div id="gameOverlay" class="viewport-overlay">
+                <h2 id="overlayTitle" class="overlay-title">Toll the Dead</h2>
+                <p id="overlaySubtitle" class="overlay-subtitle">A simple break break challenge refactored under the Reliquary of Principles.</p>
+                <button id="overlayBtn" class="overlay-btn">Begin Liturgy</button>
+            </div>
+
+            <canvas id="gameCanvas" width="600" height="600"></canvas>
+        </div>
+
+        <!-- System HUD Panel -->
+        <div class="reliquary-sidebar">
+            <div class="reliquary-header">
+                <h1>Riker Stonesoul</h1>
+                <p>The Liturgy of Rebound</p>
+            </div>
+
+            <div class="stat-group">
+                <div class="stat-card necrotic">
+                    <span class="stat-label">Sins Cleansed</span>
+                    <span class="stat-value" id="scoreValue">0</span>
+                </div>
+                <div class="stat-card radiant">
+                    <span class="stat-label">Liturgy Step</span>
+                    <span class="stat-value" id="levelValue">I</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Vessels Left</span>
+                    <span class="stat-value" id="livesValue">III</span>
+                </div>
+            </div>
+
+            <!-- Active Boons tracking -->
+            <div class="active-boons">
+                <h3>Boons of Spite</h3>
+                <div id="noBoonsMsg" style="font-size: 0.65rem; color: #555; font-style: italic; text-align: center; margin: auto 0;">No active divine manipulations.</div>
+
+                <div id="boonMeterHaste" class="boon-meter" style="display: none;">
+                    <div class="boon-info">
+                        <span>Utilitarian Haste</span>
+                        <span id="boonTimeHaste">12.0s</span>
+                    </div>
+                    <div class="boon-bar">
+                        <div id="boonFillHaste" class="boon-fill" style="background: var(--secondary-glow); box-shadow: 0 0 8px var(--secondary-glow);"></div>
+                    </div>
+                </div>
+
+                <div id="boonMeterMark" class="boon-meter" style="display: none;">
+                    <div class="boon-info">
+                        <span>Guiding Mark</span>
+                        <span>Active</span>
+                    </div>
+                    <div class="boon-bar">
+                        <div class="boon-fill" style="width: 100%; background: var(--secondary-glow); box-shadow: 0 0 8px var(--secondary-glow);"></div>
+                    </div>
+                </div>
+
+                <div id="boonMeterLaser" class="boon-meter" style="display: none;">
+                    <div class="boon-info">
+                        <span>Mind Sliver</span>
+                        <span id="boonTimeLaser">12.0s</span>
+                    </div>
+                    <div class="boon-bar">
+                        <div id="boonFillLaser" class="boon-fill" style="background: var(--primary-glow); box-shadow: 0 0 8px var(--primary-glow);"></div>
+                    </div>
+                </div>
+
+                <div id="boonMeterShield" class="boon-meter" style="display: none;">
+                    <div class="boon-info">
+                        <span>Divine Sanctuary</span>
+                        <span>Ward Erected</span>
+                    </div>
+                    <div class="boon-bar">
+                        <div class="boon-fill" style="width: 100%; background: var(--secondary-glow); box-shadow: 0 0 8px var(--secondary-glow);"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clerical-instructions">
+                <strong>Clerical Instruction:</strong> Move the Vessel of Survival using <strong>Mouse</strong> or <strong>A/D (Arrow Keys)</strong>. Shoot Mind Slivers or release trapped Guiding Bolts using <strong>Spacebar (or Left Click)</strong>.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // PROJECT NARAYAH — CLERICAL ARCADE ENGINE v3.0
+        // WRITTEN BY RIKER STONE_SOUL
+
+        // ==========================================
+        // 1. Web Audio API Synth (SoundManager) [Singleton]
+        // ==========================================
+        class SoundManager {
+            static #instance = null;
+            #audioCtx = null;
+            #muted = false;
+
+            constructor() {
+                if (SoundManager.#instance) {
+                    return SoundManager.#instance;
+                }
+                SoundManager.#instance = this;
+            }
+
+            static getInstance() {
+                if (!SoundManager.#instance) {
+                    SoundManager.#instance = new SoundManager();
+                }
+                return SoundManager.#instance;
+            }
+
+            init() {
+                if (this.#audioCtx) return;
+                try {
+                    this.#audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.error("Web Audio API not supported.", e);
+                }
+            }
+
+            get isMuted() { return this.#muted; }
+            toggleMute() {
+                this.#muted = !this.#muted;
+                return this.#muted;
+            }
+
+            #playTone(freq, duration, type = 'sine', gainStart = 0.1, gainEnd = 0.001, detune = 0) {
+                if (this.#muted || !this.#audioCtx) return;
+                if (this.#audioCtx.state === 'suspended') {
+                    this.#audioCtx.resume();
+                }
+
+                const osc = this.#audioCtx.createOscillator();
+                const gainNode = this.#audioCtx.createGain();
+
+                osc.type = type;
+                osc.frequency.setValueAtTime(freq, this.#audioCtx.currentTime);
+                if (detune !== 0) {
+                    osc.detune.setValueAtTime(detune, this.#audioCtx.currentTime);
+                }
+
+                gainNode.gain.setValueAtTime(gainStart, this.#audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(gainEnd, this.#audioCtx.currentTime + duration);
+
+                osc.connect(gainNode);
+                gainNode.connect(this.#audioCtx.destination);
+
+                osc.start();
+                osc.stop(this.#audioCtx.currentTime + duration);
+            }
+
+            // WALL/PADDLE HIT: Pure stone staff click
+            playStaffClick() {
+                this.#playTone(280, 0.08, 'triangle', 0.15, 0.01);
+            }
+
+            // INDESTRUCTIBLE METAL BOUNCE: Harsh chime
+            playIronChime() {
+                this.#playTone(660, 0.12, 'sine', 0.1, 0.01);
+                this.#playTone(1050, 0.06, 'sawtooth', 0.03, 0.001);
+            }
+
+            // TOLL THE DEAD: Discordant bell ringing out necrotic despair [105]
+            // Frequencies represent a somber, hollow cathedral bell
+            playBell(health) {
+                let baseFreq = 146; // Very deep toll for shattered brick
+                if (health === 3) baseFreq = 330;      // High pristine chimes (E4)
+                else if (health === 2) baseFreq = 220; // Medium chime (A3)
+                else if (health === 1) baseFreq = 165; // Deep discordant chime (E3)
+
+                const duration = health === 0 ? 0.8 : 0.4;
+                const volume = health === 0 ? 0.25 : 0.15;
+
+                // Fundamental bell tone
+                this.#playTone(baseFreq, duration, 'sine', volume, 0.001);
+                // First discordant overtone (minor third / detuned harmonic)
+                this.#playTone(baseFreq * 1.2, duration * 0.8, 'triangle', volume * 0.6, 0.001, 15);
+                // High bell ring metallic tone
+                this.#playTone(baseFreq * 2.5, duration * 0.4, 'sine', volume * 0.3, 0.001);
+            }
+
+            // MIND SLIVER: Shrill psychic whip sound [105]
+            playMindSliver() {
+                if (this.#muted || !this.#audioCtx) return;
+                const osc = this.#audioCtx.createOscillator();
+                const gain = this.#audioCtx.createGain();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(800, this.#audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(150, this.#audioCtx.currentTime + 0.15);
+
+                gain.gain.setValueAtTime(0.08, this.#audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.#audioCtx.currentTime + 0.15);
+
+                osc.connect(gain);
+                gain.connect(this.#audioCtx.destination);
+                osc.start();
+                osc.stop(this.#audioCtx.currentTime + 0.15);
+            }
+
+            // BOON OBTAINED: Celestial, stolen ascension sweep
+            playBoonAscension() {
+                if (this.#muted || !this.#audioCtx) return;
+                const now = this.#audioCtx.currentTime;
+                const notes = [220, 277, 330, 440, 554]; // A-major/minor hybrid progression
+                notes.forEach((freq, idx) => {
+                    const osc = this.#audioCtx.createOscillator();
+                    const gain = this.#audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+                    gain.gain.setValueAtTime(0.06, now + idx * 0.04);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.04 + 0.25);
+
+                    osc.connect(gain);
+                    gain.connect(this.#audioCtx.destination);
+                    osc.start(now + idx * 0.04);
+                    osc.stop(now + idx * 0.04 + 0.25);
+                });
+            }
+
+            // LITURGY COMPLETED (LEVEL WIN): Gregorian/Minor cadence of subversion
+            playLiturgyWin() {
+                if (this.#muted || !this.#audioCtx) return;
+                const now = this.#audioCtx.currentTime;
+                const chord = [220, 261, 330, 440]; // Deep A Minor chord
+                chord.forEach(freq => {
+                    this.#playTone(freq, 1.2, 'sine', 0.08, 0.001);
+                });
+                setTimeout(() => {
+                    const nextChord = [196, 233, 293, 392]; // Deep G Minor chord of unresolved tension
+                    nextChord.forEach(freq => {
+                        this.#playTone(freq, 1.8, 'sine', 0.08, 0.001);
+                    });
+                }, 800);
+            }
+
+            // GAME OVER: The ultimate Triple Bell Toll of necrotic decay
+            playTripleToll() {
+                let delay = 0;
+                for (let i = 0; i < 3; i++) {
+                    setTimeout(() => {
+                        this.#playTone(110, 1.6, 'sine', 0.25, 0.001);
+                        this.#playTone(132, 1.2, 'triangle', 0.15, 0.001, 20); // Dissonant minor third
+                    }, delay);
+                    delay += 700;
+                }
+            }
+        }
+
+        // ==========================================
+        // 2. Abstract Game Entity [Abstraction & Inheritance] [2]
+        // ==========================================
+        class GameEntity {
+            #x;
+            #y;
+            #width;
+            #height;
+
+            constructor(x, y, width, height) {
+                if (new.target === GameEntity) {
+                    throw new TypeError("Systemic protection violation: Cannot instantiate abstract class GameEntity directly.");
+                }
+                this.#x = x;
+                this.#y = y;
+                this.#width = width;
+                this.#height = height;
+            }
+
+            get x() { return this.#x; }
+            set x(val) { this.#x = val; }
+            get y() { return this.#y; }
+            set y(val) { this.#y = val; }
+            get width() { return this.#width; }
+            set width(val) { this.#width = val; }
+            get height() { return this.#height; }
+            set height(val) { this.#height = val; }
+
+            // Common boundary/AABB check
+            intersects(other) {
+                return this.#x < other.x + other.width &&
+                       this.#x + this.#width > other.x &&
+                       this.#y < other.y + other.height &&
+                       this.#y + this.#height > other.y;
+            }
+
+            // Pure abstract draw signature [2]
+            draw(ctx) {
+                throw new Error("Systemic error: Derived entity must implement its own 'draw' method.");
+            }
+        }
+
+        // ==========================================
+        // 3. Vessel of Survival (Paddle) [3]
+        // ==========================================
+        class Paddle extends GameEntity {
+            #speed = 520;
+            #isSticky = false;
+            #hasLaser = false;
+            #laserTimer = 0;
+            #unstableEmberTimer = 0;
+
+            constructor(x, y, width, height) {
+                super(x, y, width, height);
+            }
+
+            get isSticky() { return this.#isSticky; }
+            set isSticky(state) { this.#isSticky = state; }
+            get hasLaser() { return this.#hasLaser; }
+
+            enableLaser(duration) {
+                this.#hasLaser = true;
+                this.#laserTimer = duration;
+            }
+
+            enableHaste(duration) {
+                this.#unstableEmberTimer = duration;
+            }
+
+            update(dt, input, canvasWidth) {
+                const targetWidth = this.#unstableEmberTimer > 0 ? 140 : 90;
+                if (this.width !== targetWidth) {
+                    const diff = targetWidth - this.width;
+                    this.width += Math.sign(diff) * Math.min(Math.abs(diff), 400 * dt);
+                }
+
+                // Smoothly update position based on input
+                if (input.type === 'keys') {
+                    if (input.left) {
+                        this.x = Math.max(0, this.x - this.#speed * dt);
+                    }
+                    if (input.right) {
+                        this.x = Math.min(canvasWidth - this.width, this.x + this.#speed * dt);
+                    }
+                } else if (input.type === 'mouse') {
+                    const targetX = input.mouseX - this.width / 2;
+                    this.x = Math.max(0, Math.min(canvasWidth - this.width, targetX));
+                }
+
+                // Decline timers
+                if (this.#laserTimer > 0) {
+                    this.#laserTimer -= dt;
+                    if (this.#laserTimer <= 0) this.#hasLaser = false;
+                }
+                if (this.#unstableEmberTimer > 0) {
+                    this.#unstableEmberTimer -= dt;
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                // Outer glow shadow
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.#unstableEmberTimer > 0 ? 'rgba(230, 184, 0, 0.4)' : 'rgba(255, 51, 51, 0.3)';
+
+                // Draw solid base (Gothic stone structure)
+                ctx.fillStyle = '#141519';
+                ctx.strokeStyle = '#2d1a1a';
+                ctx.lineWidth = 2;
+
+                // Beveled container
+                ctx.beginPath();
+                ctx.moveTo(this.x + 8, this.y);
+                ctx.lineTo(this.x + this.width - 8, this.y);
+                ctx.lineTo(this.x + this.width, this.y + this.height);
+                ctx.lineTo(this.x, this.y + this.height);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Inner core channel
+                ctx.fillStyle = this.#unstableEmberTimer > 0 ? '#cc9900' : '#882222';
+                ctx.fillRect(this.x + 12, this.y + 4, this.width - 24, 4);
+
+                // Runes: Emitting soft neon sparks [11]
+                ctx.fillStyle = this.#unstableEmberTimer > 0 ? 'var(--secondary-glow)' : 'var(--primary-glow)';
+                ctx.font = '7px sans-serif';
+                ctx.fillText("⚡", this.x + 4, this.y + 11);
+                ctx.fillText("⚡", this.x + this.width - 8, this.y + 11);
+
+                // If lasers (Mind Sliver spikes) are enabled, render iron turrets
+                if (this.#hasLaser) {
+                    ctx.fillStyle = '#6a6b75';
+                    ctx.fillRect(this.x + 10, this.y - 6, 6, 6);
+                    ctx.fillRect(this.x + this.width - 16, this.y - 6, 6, 6);
+                    ctx.fillStyle = 'var(--primary-glow)';
+                    ctx.fillRect(this.x + 12, this.y - 8, 2, 2);
+                    ctx.fillRect(this.x + this.width - 14, this.y - 8, 2, 2);
+                }
+
+                ctx.restore();
+            }
+
+            get activeTimers() {
+                return {
+                    laser: Math.max(0, this.#laserTimer),
+                    haste: Math.max(0, this.#unstableEmberTimer)
+                };
+            }
+        }
+
+        // ==========================================
+        // 4. Guiding Bolt (Ball) [3, 105]
+        // ==========================================
+        class Ball extends GameEntity {
+            #radius;
+            #vx;
+            #vy;
+            #trail = []; // Frame coordinate memory [11]
+            #clung = false;
+            #clungOffsetX = 0;
+
+            constructor(x, y, radius, vx, vy) {
+                super(x - radius, y - radius, radius * 2, radius * 2);
+                this.#radius = radius;
+                this.#vx = vx;
+                this.#vy = vy;
+            }
+
+            get radius() { return this.#radius; }
+            get vx() { return this.#vx; }
+            set vx(v) { this.#vx = v; }
+            get vy() { return this.#vy; }
+            set vy(v) { this.#vy = v; }
+            get clung() { return this.#clung; }
+            set clung(state) { this.#clung = state; }
+            get clungOffsetX() { return this.#clungOffsetX; }
+            set clungOffsetX(offset) { this.#clungOffsetX = offset; }
+
+            update(dt, paddle) {
+                if (this.#clung) {
+                    this.x = paddle.x + paddle.width / 2 + this.#clungOffsetX - this.#radius;
+                    this.y = paddle.y - this.#radius * 2;
+                    return;
+                }
+
+                // Preserve trail
+                this.#trail.push({ x: this.x + this.#radius, y: this.y + this.#radius });
+                if (this.#trail.length > 10) {
+                    this.#trail.shift();
+                }
+
+                // Translate position
+                this.x += this.#vx * dt;
+                this.y += this.#vy * dt;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                // 1. Draw glowing neon movement trail [11]
+                this.#trail.forEach((point, idx) => {
+                    const ratio = (idx + 1) / this.#trail.length;
+                    ctx.beginPath();
+                    ctx.arc(point.x, point.y, this.#radius * ratio, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(255, 51, 51, ${0.18 * ratio})`;
+                    ctx.fill();
+                });
+
+                // 2. Draw Guiding Bolt Core: Inner intense light
+                ctx.shadowBlur = 16;
+                ctx.shadowColor = 'var(--primary-glow)';
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.x + this.#radius, this.y + this.#radius, this.#radius, 0, Math.PI * 2);
+                ctx.fill();
+
+                // 3. Blood-red iris/ring
+                ctx.shadowBlur = 0;
+                ctx.strokeStyle = 'var(--primary-glow)';
+                ctx.lineWidth = 1.5;
+                ctx.stroke();
+
+                ctx.restore();
+            }
+
+            launch(angle, speed) {
+                this.#vx = speed * Math.sin(angle);
+                this.#vy = -speed * Math.cos(angle);
+                this.#clung = false;
+            }
+        }
+
+        // ==========================================
+        // 5. Stones of Dogma (Bricks) [3, 104]
+        // ==========================================
+        class Brick extends GameEntity {
+            #health;
+            #maxHealth;
+            #isIndestructible;
+
+            constructor(x, y, width, height, health, isIndestructible = false) {
+                super(x, y, width, height);
+                this.#health = health;
+                this.#maxHealth = health;
+                this.#isIndestructible = isIndestructible;
+            }
+
+            get health() { return this.#health; }
+            get isIndestructible() { return this.#isIndestructible; }
+
+            // Inflict damage returning true if disintegrated
+            damage() {
+                if (this.#isIndestructible) return false;
+                this.#health = Math.max(0, this.#health - 1);
+                return this.#health === 0;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                if (this.#isIndestructible) {
+                    // Iron Monolith of Law: Obsidian grey steel with golden locking corners
+                    ctx.fillStyle = '#1c1d22';
+                    ctx.strokeStyle = '#34495e';
+                    ctx.lineWidth = 2;
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                    // Rivets
+                    ctx.fillStyle = 'var(--secondary-glow)';
+                    ctx.fillRect(this.x + 4, this.y + 4, 3, 3);
+                    ctx.fillRect(this.x + this.width - 7, this.y + 4, 3, 3);
+                    ctx.fillRect(this.x + 4, this.y + this.height - 7, 3, 3);
+                    ctx.fillRect(this.x + this.width - 7, this.y + this.height - 7, 3, 3);
+                } else {
+                    // Standard Slabs of Dogma
+                    let baseColor, glowColor, borderRune;
+
+                    if (this.#health === 3) {
+                        // Sanctified Alabaster (Pristine, Radiant Gold Glow)
+                        baseColor = '#eae7d9';
+                        glowColor = 'var(--secondary-glow)';
+                        borderRune = '#cc9900';
+                    } else if (this.#health === 2) {
+                        // Fractured Granite (Heavily cracked crimson stone)
+                        baseColor = '#804040';
+                        glowColor = 'var(--primary-glow)';
+                        borderRune = '#ff1a1a';
+                    } else {
+                        // Decay Slate (Fading purplish grey)
+                        baseColor = '#433c4f';
+                        glowColor = 'var(--necrotic-glow)';
+                        borderRune = '#8e44ad';
+                    }
+
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = glowColor;
+                    ctx.fillStyle = baseColor;
+                    ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                    ctx.shadowBlur = 0;
+                    ctx.strokeStyle = borderRune;
+                    ctx.lineWidth = 1.5;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                    // Distressed cracking effects inside granite/slate
+                    if (this.#health < this.#maxHealth) {
+                        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(this.x + this.width * 0.2, this.y + 2);
+                        ctx.lineTo(this.x + this.width * 0.35, this.y + this.height * 0.75);
+                        ctx.lineTo(this.x + this.width * 0.7, this.y + this.height * 0.9);
+                        ctx.stroke();
+
+                        if (this.#health === 1) {
+                            // Multiple fractures
+                            ctx.beginPath();
+                            ctx.moveTo(this.x + this.width * 0.8, this.y + 4);
+                            ctx.lineTo(this.x + this.width * 0.5, this.y + this.height * 0.6);
+                            ctx.lineTo(this.x + this.width * 0.1, this.y + this.height * 0.8);
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // 6. Boons of Spite (PowerUp Entity) [10]
+        // ==========================================
+        class PowerUp extends GameEntity {
+            #type;
+            #speed = 130; // Downward glide
+
+            constructor(x, y, type) {
+                super(x - 12, y - 12, 24, 24);
+                this.#type = type;
+            }
+
+            get type() { return this.#type; }
+
+            update(dt) {
+                this.y += this.#speed * dt;
+            }
+
+            draw(ctx) {
+                ctx.save();
+
+                // Color configuration matching respective spells [10]
+                let color = 'var(--text-color)';
+                let symbol = '?';
+                if (this.#type === 'MULTI') { color = '#3498db'; symbol = '⚡'; }
+                else if (this.#type === 'EXPAND') { color = 'var(--secondary-glow)'; symbol = '✙'; }
+                else if (this.#type === 'STICKY') { color = '#2ecc71'; symbol = '⚓'; }
+                else if (this.#type === 'LASER') { color = 'var(--primary-glow)'; symbol = '✴'; }
+                else if (this.#type === 'SHIELD') { color = 'var(--secondary-glow)'; symbol = '☨'; }
+                else if (this.#type === 'SLOW') { color = 'var(--necrotic-glow)'; symbol = '⌛'; }
+
+                // Outer runic crest
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = color;
+                ctx.fillStyle = '#0f1013';
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+
+                ctx.beginPath();
+                ctx.arc(this.x + this.width/2, this.y + this.height/2, this.width/2, 0, Math.PI*2);
+                ctx.fill();
+                ctx.stroke();
+
+                // Inner core symbol
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = color;
+                ctx.font = 'bold 12px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(symbol, this.x + this.width/2, this.y + this.height/2 + 0.5);
+
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // 7. Mind Sliver Projectile (Laser) [10, 105]
+        // ==========================================
+        class Laser extends GameEntity {
+            #speed = 600;
+
+            constructor(x, y) {
+                super(x - 2, y - 12, 4, 12);
+            }
+
+            update(dt) {
+                this.y -= this.#speed * dt;
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'var(--primary-glow)';
+
+                // Laser look like small glowing obsidian slivers with crimson core
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                ctx.strokeStyle = 'var(--primary-glow)';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // 8. Ashes & Embers Particle [11]
+        // ==========================================
+        class Particle extends GameEntity {
+            #vx;
+            #vy;
+            #color;
+            #alpha = 1.0;
+            #decay = 1.4;
+
+            constructor(x, y, color) {
+                const size = Math.random() * 4 + 2;
+                super(x - size/2, y - size/2, size, size);
+                this.#vx = (Math.random() - 0.5) * 200;
+                this.#vy = (Math.random() - 0.5) * 200;
+                this.#color = color;
+                this.#decay = Math.random() * 0.8 + 0.8;
+            }
+
+            get alpha() { return this.#alpha; }
+
+            update(dt) {
+                this.x += this.#vx * dt;
+                this.y += this.#vy * dt;
+                this.#vy += 80 * dt; // Light drifting downward
+                this.#alpha = Math.max(0, this.#alpha - this.#decay * dt);
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.globalAlpha = this.#alpha;
+                ctx.fillStyle = this.#color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.restore();
+            }
+        }
+
+        // ==========================================
+        // 9. Structured Assembly (LevelBuilder) [16, 58]
+        // ==========================================
+        class LevelBuilder {
+            static LEVEL_DESIGNS = [
+                // Liturgy I: Standard alignment of dogma
+                [
+                    [0, 0, 0, 0, 0, 0, 0, 0],
+                    [3, 3, 3, 3, 3, 3, 3, 3],
+                    [2, 2, 2, 2, 2, 2, 2, 2],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Liturgy II: Shield walls (steel cores) and high alabasters [8]
+                [
+                    [4, 0, 3, 3, 3, 3, 0, 4],
+                    [2, 2, 0, 4, 4, 0, 2, 2],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [0, 4, 0, 0, 0, 0, 4, 0]
+                ],
+                // Liturgy III: The Fractured Temple
+                [
+                    [3, 0, 3, 0, 3, 0, 3, 0],
+                    [4, 2, 4, 2, 4, 2, 4, 2],
+                    [1, 1, 1, 1, 1, 1, 1, 1],
+                    [3, 4, 3, 4, 3, 4, 3, 4],
+                    [0, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                // Liturgy IV: Final Trial of Stonesoul
+                [
+                    [4, 4, 4, 4, 4, 4, 4, 4],
+                    [3, 1, 3, 1, 3, 1, 3, 1],
+                    [2, 2, 2, 4, 4, 2, 2, 2],
+                    [1, 3, 1, 3, 1, 3, 1, 3],
+                    [0, 4, 0, 0, 0, 0, 4, 0]
+                ]
+            ];
+
+            static build(levelIndex, canvasWidth, brickHeight = 22) {
+                const design = this.LEVEL_DESIGNS[levelIndex % this.LEVEL_DESIGNS.length];
+                const bricks = [];
+                const cols = 8;
+                const topPadding = 50;
+                const sidePadding = 30;
+                const usableWidth = canvasWidth - sidePadding * 2;
+                const brickWidth = Math.floor(usableWidth / cols) - 6;
+
+                for (let r = 0; r < design.length; r++) {
+                    for (let c = 0; c < cols; c++) {
+                        const cell = design[r][c];
+                        if (cell === 0) continue;
+
+                        const bx = sidePadding + c * (brickWidth + 6) + 3;
+                        const by = topPadding + r * (brickHeight + 6);
+                        const isIndestructible = (cell === 4);
+                        const health = isIndestructible ? 1 : cell;
+
+                        bricks.push(new Brick(bx, by, brickWidth, brickHeight, health, isIndestructible));
+                    }
+                }
+                return bricks;
+            }
+        }
+
+        // ==========================================
+        // 10. Master Orchestrator (GameManager) [4, 96]
+        // ==========================================
+        class GameManager {
+            static #instance = null;
+
+            // Canvas & Execution references
+            #canvas;
+            #ctx;
+            #sound = SoundManager.getInstance();
+
+            // Core state machine
+            #gameState = 'PRESTART'; // PRESTART, ACTIVE, PAUSED, DEATH, VICTORY, GAMEOVER
+            #score = 0;
+            #lives = 3;
+            #levelIndex = 0;
+            #shakeIntensity = 0;
+
+            // Active Entities lists
+            #paddle;
+            #balls = [];
+            #bricks = [];
+            #powerups = [];
+            #lasers = [];
+            #particles = [];
+
+            // Spatial boundaries
+            #ballDefaultSpeed = 310;
+            #maxSpeedScale = 1.0;
+
+            // Interactive state controls
+            #keys = {};
+            #mouseInput = { type: 'keys', mouseX: 0 };
+            #isShieldErected = false;
+
+            constructor() {
+                if (GameManager.#instance) return GameManager.#instance;
+                GameManager.#instance = this;
+            }
+
+            static getInstance() {
+                if (!GameManager.#instance) {
+                    GameManager.#instance = new GameManager();
+                }
+                return GameManager.#instance;
+            }
+
+            init(canvasId) {
+                this.#canvas = document.getElementById(canvasId);
+                this.#ctx = this.#canvas.getContext('2d');
+
+                this.#setupEventBindings();
+                this.#resetFullSession();
+                this.#triggerFrameLoop();
+            }
+
+            #resetFullSession() {
+                this.#score = 0;
+                this.#lives = 3;
+                this.#levelIndex = 0;
+                this.#isShieldErected = false;
+                this.#balls = [];
+                this.#powerups = [];
+                this.#lasers = [];
+                this.#particles = [];
+
+                this.#paddle = new Paddle(this.#canvas.width / 2 - 45, this.#canvas.height - 36, 90, 14);
+                this.#loadCurrentLevel();
+            }
+
+            #loadCurrentLevel() {
+                this.#bricks = LevelBuilder.build(this.#levelIndex, this.#canvas.width);
+                this.#lasers = [];
+                this.#powerups = [];
+                this.#resetProjectiles();
+                this.#isShieldErected = false;
+                this.#maxSpeedScale = 1.0 + this.#levelIndex * 0.08;
+            }
+
+            #resetProjectiles() {
+                this.#balls = [
+                    new Ball(this.#canvas.width / 2, this.#canvas.height - 50, 6, 0, 0)
+                ];
+                this.#balls[0].clung = true;
+                this.#balls[0].clungOffsetX = 0;
+            }
+
+            #setupEventBindings() {
+                // Keyboard Bindings
+                window.addEventListener('keydown', (e) => {
+                    this.#keys[e.code] = true;
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        this.#triggerTacticalRelease();
+                    }
+                    if (e.code === 'KeyP') {
+                        this.#toggleTemporalPause();
+                    }
+                });
+
+                window.addEventListener('keyup', (e) => {
+                    this.#keys[e.code] = false;
+                });
+
+                // Mouse/Touch controls
+                this.#canvas.addEventListener('mousemove', (e) => {
+                    const rect = this.#canvas.getBoundingClientRect();
+                    this.#mouseInput.mouseX = e.clientX - rect.left;
+                    this.#mouseInput.type = 'mouse';
+                });
+
+                this.#canvas.addEventListener('mousedown', (e) => {
+                    if (this.#gameState === 'ACTIVE') {
+                        this.#triggerTacticalRelease();
+                    }
+                });
+
+                // UI bindings
+                document.getElementById('overlayBtn').addEventListener('click', () => {
+                    this.#sound.init();
+                    this.#handleOverlayClick();
+                });
+
+                const audioToggle = document.getElementById('audioToggleBtn');
+                audioToggle.addEventListener('click', () => {
+                    this.#sound.init();
+                    const muted = this.#sound.toggleMute();
+                    audioToggle.innerText = muted ? "Necrosis Silence" : "Necrosis Resonance";
+                    audioToggle.classList.toggle('active', !muted);
+                });
+            }
+
+            #handleOverlayClick() {
+                if (this.#gameState === 'PRESTART') {
+                    this.#gameState = 'ACTIVE';
+                    this.#sound.playStaffClick();
+                    this.#hideOverlay();
+                } else if (this.#gameState === 'PAUSED') {
+                    this.#gameState = 'ACTIVE';
+                    this.#hideOverlay();
+                } else if (this.#gameState === 'DEATH') {
+                    this.#gameState = 'ACTIVE';
+                    this.#hideOverlay();
+                } else if (this.#gameState === 'VICTORY') {
+                    this.#levelIndex++;
+                    this.#loadCurrentLevel();
+                    this.#gameState = 'ACTIVE';
+                    this.#hideOverlay();
+                } else if (this.#gameState === 'GAMEOVER') {
+                    this.#resetFullSession();
+                    this.#gameState = 'ACTIVE';
+                    this.#hideOverlay();
+                }
+            }
+
+            #toggleTemporalPause() {
+                if (this.#gameState === 'ACTIVE') {
+                    this.#gameState = 'PAUSED';
+                    this.#showOverlay("Liturgy Paused", "Temporal state frozen under clerical oversight.", "Resume Ritual");
+                } else if (this.#gameState === 'PAUSED') {
+                    this.#gameState = 'ACTIVE';
+                    this.#hideOverlay();
+                }
+            }
+
+            #triggerTacticalRelease() {
+                // 1. Release balls clung to paddle
+                let releasedAny = false;
+                this.#balls.forEach(ball => {
+                    if (ball.clung) {
+                        const releaseAngle = (Math.random() * 40 - 20) * (Math.PI / 180); // Slight variance
+                        const finalSpeed = this.#ballDefaultSpeed * this.#maxSpeedScale;
+                        ball.launch(releaseAngle, finalSpeed);
+                        releasedAny = true;
+                    }
+                });
+
+                // 2. Fire lasers (Mind Sliver spikes) if available
+                if (!releasedAny && this.#paddle.hasLaser) {
+                    this.#lasers.push(new Laser(this.#paddle.x + 12, this.#paddle.y));
+                    this.#lasers.push(new Laser(this.#paddle.x + this.#paddle.width - 14, this.#paddle.y));
+                    this.#sound.playMindSliver();
+                }
+            }
+
+            #showOverlay(title, subtitle, buttonText) {
+                document.getElementById('overlayTitle').innerText = title;
+                document.getElementById('overlaySubtitle').innerText = subtitle;
+                document.getElementById('overlayBtn').innerText = buttonText;
+                document.getElementById('gameOverlay').classList.remove('hidden');
+            }
+
+            #hideOverlay() {
+                document.getElementById('gameOverlay').classList.add('hidden');
+            }
+
+            #applyScreenShake(intensity) {
+                this.#shakeIntensity = Math.max(this.#shakeIntensity, intensity);
+            }
+
+            // Delta time normalization loop [5, 12]
+            #lastTime = 0;
+            #triggerFrameLoop() {
+                const loop = (timestamp) => {
+                    if (!this.#lastTime) this.#lastTime = timestamp;
+                    let dt = (timestamp - this.#lastTime) / 1000;
+                    this.#lastTime = timestamp;
+
+                    // Mitigation against massive lag jumps [5, 12]
+                    if (dt > 0.1) dt = 0.1;
+
+                    this.#updateCore(dt);
+                    this.#renderCore();
+
+                    requestAnimationFrame(loop);
+                };
+                requestAnimationFrame(loop);
+            }
+
+            #updateCore(dt) {
+                if (this.#gameState !== 'ACTIVE') return;
+
+                // Update Paddle
+                const input = this.#mouseInput.type === 'mouse' ? this.#mouseInput : {
+                    type: 'keys',
+                    left: this.#keys.ArrowLeft || this.#keys.KeyA,
+                    right: this.#keys.ArrowRight || this.#keys.KeyD
+                };
+                this.#paddle.update(dt, input, this.#canvas.width);
+
+                // Update Projectiles (Guiding Bolts)
+                this.#balls.forEach(ball => {
+                    ball.update(dt, this.#paddle);
+                    this.#resolveBoundaryPhysics(ball);
+                });
+
+                // Update Lasers
+                this.#lasers.forEach((laser, idx) => {
+                    laser.update(dt);
+                    if (laser.y < 0) {
+                        this.#lasers.splice(idx, 1);
+                    }
+                });
+
+                // Update Powerups (Boons)
+                this.#powerups.forEach((pu, idx) => {
+                    pu.update(dt);
+
+                    // Collision with paddle [10]
+                    if (pu.intersects(this.#paddle)) {
+                        this.#triggerBoonActivation(pu.type);
+                        this.#powerups.splice(idx, 1);
+                    } else if (pu.y > this.#canvas.height) {
+                        this.#powerups.splice(idx, 1);
+                    }
+                });
+
+                // Update Particles [11]
+                this.#particles.forEach((p, idx) => {
+                    p.update(dt);
+                    if (p.alpha <= 0) {
+                        this.#particles.splice(idx, 1);
+                    }
+                });
+
+                // Collision interactions
+                this.#handleLaserCollisions();
+                this.#handleBallCollisions();
+
+                // Dynamic timers update
+                this.#updateHUDValues();
+            }
+
+            #resolveBoundaryPhysics(ball) {
+                if (ball.clung) return;
+
+                const r = ball.radius;
+                const bx = ball.x + r;
+                const by = ball.y + r;
+
+                // Wall horizontal bounces
+                if (bx - r <= 0) {
+                    ball.vx = Math.abs(ball.vx);
+                    ball.x = 0;
+                    this.#sound.playStaffClick();
+                } else if (bx + r >= this.#canvas.width) {
+                    ball.vx = -Math.abs(ball.vx);
+                    ball.x = this.#canvas.width - r * 2;
+                    this.#sound.playStaffClick();
+                }
+
+                // Wall top bounce
+                if (by - r <= 0) {
+                    ball.vy = Math.abs(ball.vy);
+                    ball.y = 0;
+                    this.#sound.playStaffClick();
+                }
+
+                // Abyss drop detection
+                if (by + r >= this.#canvas.height) {
+                    // Shield active check [10]
+                    if (this.#isShieldErected) {
+                        ball.vy = -Math.abs(ball.vy);
+                        ball.y = this.#canvas.height - 20 - r * 2;
+                        this.#isShieldErected = false;
+                        this.#applyScreenShake(12);
+                        this.#sound.playIronChime();
+                    } else {
+                        // Drop ball
+                        const idx = this.#balls.indexOf(ball);
+                        if (idx !== -1) {
+                            this.#balls.splice(idx, 1);
+                        }
+
+                        if (this.#balls.length === 0) {
+                            this.#triggerVesselDemise();
+                        }
+                    }
+                }
+            }
+
+            // Circle-to-AABB Box Clamping Algorithm [12, 13]
+            #checkCircleAABBCollision(ball, rect) {
+                const ballX = ball.x + ball.radius;
+                const ballY = ball.y + ball.radius;
+
+                const closestX = Math.max(rect.x, Math.min(ballX, rect.x + rect.width));
+                const closestY = Math.max(rect.y, Math.min(ballY, rect.y + rect.height));
+
+                const distanceX = ballX - closestX;
+                const distanceY = ballY - closestY;
+                const distanceSq = distanceX * distanceX + distanceY * distanceY;
+
+                if (distanceSq < ball.radius * ball.radius) {
+                    return {
+                        collided: true,
+                        closestX: closestX,
+                        closestY: closestY,
+                        distance: Math.sqrt(distanceSq),
+                        normalX: distanceX,
+                        normalY: distanceY
+                    };
+                }
+                return { collided: false };
+            }
+
+            #handleBallCollisions() {
+                this.#balls.forEach(ball => {
+                    if (ball.clung) return;
+
+                    // 1. Paddle overlap resolution
+                    const paddleCol = this.#checkCircleAABBCollision(ball, this.#paddle);
+                    if (paddleCol.collided) {
+                        const ballX = ball.x + ball.radius;
+                        const padX = this.#paddle.x + this.#paddle.width / 2;
+
+                        // Normalized hit maps deflection to angular vectors [-60deg, +60deg] [5]
+                        const normalizedHit = (ballX - padX) / (this.#paddle.width / 2);
+                        const angle = normalizedHit * (Math.PI / 3);
+                        const finalSpeed = this.#ballDefaultSpeed * this.#maxSpeedScale;
+
+                        if (this.#paddle.isSticky) {
+                            // Magnet lock active [10]
+                            ball.clung = true;
+                            ball.clungOffsetX = ballX - this.#paddle.x - this.#paddle.width / 2;
+                            this.#sound.playStaffClick();
+                        } else {
+                            ball.vx = finalSpeed * Math.sin(angle);
+                            ball.vy = -finalSpeed * Math.cos(angle);
+                            this.#sound.playStaffClick();
+                        }
+
+                        // Push slightly above paddle boundary to clear stickiness
+                        ball.y = this.#paddle.y - ball.radius * 2;
+                    }
+
+                    // 2. Bricks overlap resolution
+                    for (let idx = 0; idx < this.#bricks.length; idx++) {
+                        const brick = this.#bricks[idx];
+                        const collision = this.#checkCircleAABBCollision(ball, brick);
+
+                        if (collision.collided) {
+                            // Perform directional vector reflection
+                            let normalX = 0, normalY = 0;
+
+                            if (collision.distance > 0) {
+                                normalX = collision.normalX / collision.distance;
+                                normalY = collision.normalY / collision.distance;
+                            } else {
+                                // Direct overlapping fallback [5]
+                                const left = (ball.x + ball.radius) - brick.x;
+                                const right = (brick.x + brick.width) - (ball.x + ball.radius);
+                                const top = (ball.y + ball.radius) - brick.y;
+                                const bottom = (brick.y + brick.height) - (ball.y + ball.radius);
+                                const min = Math.min(left, right, top, bottom);
+
+                                if (min === left) normalX = -1;
+                                else if (min === right) normalX = 1;
+                                else if (min === top) normalY = -1;
+                                else normalY = 1;
+                            }
+
+                            // Inverse corresponding vector components [5]
+                            if (Math.abs(normalX) > Math.abs(normalY)) {
+                                ball.vx = Math.abs(ball.vx) * Math.sign(normalX);
+                                ball.x = collision.closestX + normalX * ball.radius - ball.radius;
+                            } else {
+                                ball.vy = Math.abs(ball.vy) * Math.sign(normalY);
+                                ball.y = collision.closestY + normalY * ball.radius - ball.radius;
+                            }
+
+                            // Inflict structural damage [3, 6]
+                            this.#inflictBrickDamages(brick, idx);
+                            break; // Handle single collision per frame to preserve processing fidelity
+                        }
+                    }
+                });
+            }
+
+            #handleLaserCollisions() {
+                for (let lIdx = this.#lasers.length - 1; lIdx >= 0; lIdx--) {
+                    const laser = this.#lasers[lIdx];
+                    for (let bIdx = this.#bricks.length - 1; bIdx >= 0; bIdx--) {
+                        const brick = this.#bricks[bIdx];
+                        if (laser.intersects(brick)) {
+                            this.#lasers.splice(lIdx, 1);
+                            this.#inflictBrickDamages(brick, bIdx);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            #inflictBrickDamages(brick, idx) {
+                if (brick.isIndestructible) {
+                    this.#sound.playIronChime();
+                    this.#applyScreenShake(3);
+                    return;
+                }
+
+                const shattered = brick.damage();
+
+                // Spawn sparks [11]
+                const color = brick.health === 2 ? 'var(--primary-glow)' :
+                              (brick.health === 1 ? 'var(--necrotic-glow)' : 'var(--secondary-glow)');
+                for (let i = 0; i < 8; i++) {
+                    this.#particles.push(new Particle(brick.x + brick.width/2, brick.y + brick.height/2, color));
+                }
+
+                if (shattered) {
+                    this.#score += brick.health === 0 ? 30 : 10;
+                    this.#bricks.splice(idx, 1);
+                    this.#sound.playBell(0); // Deep Necrotic bell toll [105]
+                    this.#applyScreenShake(8);
+
+                    // Chance to drop Boon of Spite (28%) [10]
+                    if (Math.random() < 0.28) {
+                        const types = ['MULTI', 'EXPAND', 'STICKY', 'LASER', 'SHIELD', 'SLOW'];
+                        const selectedType = types[Math.floor(Math.random() * types.length)];
+                        this.#powerups.push(new PowerUp(brick.x + brick.width/2, brick.y + brick.height/2, selectedType));
+                    }
+                } else {
+                    this.#score += 10;
+                    this.#sound.playBell(brick.health); // Incremental bell tone resonance
+                    this.#applyScreenShake(4);
+                }
+
+                // Check for victory
+                const breakableLeft = this.#bricks.some(b => !b.isIndestructible);
+                if (!breakableLeft) {
+                    this.#triggerLiturgyVictory();
+                }
+            }
+
+            #triggerBoonActivation(type) {
+                this.#sound.playBoonAscension();
+
+                if (type === 'MULTI') {
+                    // Create dual additional Guiding Bolts [10]
+                    const original = this.#balls[0] || { x: this.#canvas.width/2, y: this.#canvas.height-100, radius: 6, vx: 0, vy: -this.#ballDefaultSpeed };
+                    for (let i = 0; i < 2; i++) {
+                        const angle = (Math.random() * 60 - 30) * (Math.PI/180);
+                        const finalSpeed = this.#ballDefaultSpeed * this.#maxSpeedScale;
+                        const extraBall = new Ball(
+                            original.x + original.radius,
+                            original.y + original.radius,
+                            6,
+                            finalSpeed * Math.sin(angle),
+                            -finalSpeed * Math.cos(angle)
+                        );
+                        this.#balls.push(extraBall);
+                    }
+                } else if (type === 'EXPAND') {
+                    this.#paddle.enableHaste(12);
+                } else if (type === 'STICKY') {
+                    this.#paddle.isSticky = true;
+                } else if (type === 'LASER') {
+                    this.#paddle.enableLaser(12);
+                } else if (type === 'SHIELD') {
+                    this.#isShieldErected = true;
+                } else if (type === 'SLOW') {
+                    this.#balls.forEach(ball => {
+                        ball.vx *= 0.6;
+                        ball.vy *= 0.6;
+                    });
+                    setTimeout(() => {
+                        this.#balls.forEach(ball => {
+                            ball.vx /= 0.6;
+                            ball.vy /= 0.6;
+                        });
+                    }, 8000);
+                }
+            }
+
+            #triggerVesselDemise() {
+                this.#lives--;
+                this.#applyScreenShake(20);
+                this.#sound.playBell(1);
+
+                if (this.#lives <= 0) {
+                    this.#gameState = 'GAMEOVER';
+                    this.#sound.playTripleToll(); // Final triple bell toll [31, 105]
+                    this.#showOverlay("The Bell Tolls", "Your physical vessel has fragmented. Entropy wins.", "Retry Liturgy");
+                } else {
+                    this.#gameState = 'DEATH';
+                    this.#showOverlay("Vessel Ruined", "A temporary loss of structural integrity.", "Re-manifest Vessel");
+                }
+            }
+
+            #triggerLiturgyVictory() {
+                this.#gameState = 'VICTORY';
+                this.#sound.playLiturgyWin();
+                this.#showOverlay("Sacred Transcendence", "You have shattered the rigid seals of Dogma.", "Proceed Liturgy Step");
+            }
+
+            #updateHUDValues() {
+                document.getElementById('scoreValue').innerText = this.#score;
+                document.getElementById('levelValue').innerText = this.#romanize(this.#levelIndex + 1);
+
+                let livesStr = "";
+                for (let i = 0; i < this.#lives; i++) livesStr += "I";
+                document.getElementById('livesValue').innerText = livesStr || "∅";
+
+                // Update meters
+                const timers = this.#paddle.activeTimers;
+                const hasBoon = timers.laser > 0 || timers.haste > 0 || this.#paddle.isSticky || this.#isShieldErected;
+
+                document.getElementById('noBoonsMsg').style.display = hasBoon ? 'none' : 'block';
+
+                const meterHaste = document.getElementById('boonMeterHaste');
+                if (timers.haste > 0) {
+                    meterHaste.style.display = 'block';
+                    document.getElementById('boonTimeHaste').innerText = timers.haste.toFixed(1) + "s";
+                    document.getElementById('boonFillHaste').style.width = (timers.haste / 12 * 100) + "%";
+                } else {
+                    meterHaste.style.display = 'none';
+                }
+
+                const meterMark = document.getElementById('boonMeterMark');
+                if (this.#paddle.isSticky) {
+                    meterMark.style.display = 'block';
+                } else {
+                    meterMark.style.display = 'none';
+                }
+
+                const meterLaser = document.getElementById('boonMeterLaser');
+                if (timers.laser > 0) {
+                    meterLaser.style.display = 'block';
+                    document.getElementById('boonTimeLaser').innerText = timers.laser.toFixed(1) + "s";
+                    document.getElementById('boonFillLaser').style.width = (timers.laser / 12 * 100) + "%";
+                } else {
+                    meterLaser.style.display = 'none';
+                }
+
+                const meterShield = document.getElementById('boonMeterShield');
+                if (this.#isShieldErected) {
+                    meterShield.style.display = 'block';
+                } else {
+                    meterShield.style.display = 'none';
+                }
+            }
+
+            #romanize(num) {
+                const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+                let roman = '';
+                for (let i in lookup ) {
+                    while ( num >= lookup[i] ) {
+                        roman += i;
+                        num -= lookup[i];
+                    }
+                }
+                return roman;
+            }
+
+            #renderCore() {
+                this.#ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
+
+                this.#ctx.save();
+
+                // Screen shake offset calculation [11]
+                if (this.#shakeIntensity > 0) {
+                    const dx = (Math.random() - 0.5) * this.#shakeIntensity;
+                    const dy = (Math.random() - 0.5) * this.#shakeIntensity;
+                    this.#ctx.translate(dx, dy);
+                    this.#shakeIntensity *= 0.9; // Fast decaying
+                    if (this.#shakeIntensity < 0.5) this.#shakeIntensity = 0;
+                }
+
+                // A. Render Altar stone backdrop lines
+                this.#ctx.strokeStyle = 'rgba(255, 51, 51, 0.03)';
+                this.#ctx.lineWidth = 1;
+                for (let i = 0; i < this.#canvas.width; i += 30) {
+                    this.#ctx.beginPath();
+                    this.#ctx.moveTo(i, 0);
+                    this.#ctx.lineTo(i, this.#canvas.height);
+                    this.#ctx.stroke();
+                }
+
+                // B. Draw Shield (Divine Sanctuary) boundary at bottom of screen [10]
+                if (this.#isShieldErected) {
+                    this.#ctx.save();
+                    this.#ctx.shadowBlur = 15;
+                    this.#ctx.shadowColor = 'var(--secondary-glow)';
+                    this.#ctx.strokeStyle = 'var(--secondary-glow)';
+                    this.#ctx.lineWidth = 4;
+                    this.#ctx.beginPath();
+                    this.#ctx.moveTo(0, this.#canvas.height - 10);
+                    this.#ctx.lineTo(this.#canvas.width, this.#canvas.height - 10);
+                    this.#ctx.stroke();
+                    this.#ctx.restore();
+                }
+
+                // C. Render static elements & dynamic lists polmorphic collections [4]
+                this.#bricks.forEach(b => b.draw(this.#ctx));
+                this.#powerups.forEach(pu => pu.draw(this.#ctx));
+                this.#lasers.forEach(l => l.draw(this.#ctx));
+                this.#particles.forEach(p => p.draw(this.#ctx));
+                this.#paddle.draw(this.#ctx);
+
+                // D. Render Guiding Bolts
+                this.#balls.forEach(ball => ball.draw(this.#ctx));
+
+                this.#ctx.restore();
+            }
+        }
+
+        // Initialize engine once window loading ritual completes
+        window.addEventListener('load', () => {
+            GameManager.getInstance().init('gameCanvas');
+        });
+    </script>
+</body>
+</html>
