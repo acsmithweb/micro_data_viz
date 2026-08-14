@@ -273,7 +273,7 @@ class GridBucket {
 
         const gridContainer = document.createElement("div");
         gridContainer.className = "vde-bucket-grid-container p-2";
-        
+
         const gridElement = document.createElement("div");
         gridElement.className = "grid-stack";
         gridElement.id = `grid-stack-${this.id}`;
@@ -316,7 +316,7 @@ class GridBucket {
                 this.grid.column(colsInput);
                 this.grid.cellHeight(heightInput);
                 this.grid.margin(marginInput);
-                
+
                 // Dynamic toggles on the underlying GridStack layout context
                 this.grid.enableMove(moveInput);
                 this.grid.enableResize(resizeInput);
@@ -472,7 +472,7 @@ class PanelFactory {
         if (typeof RichTextContent === 'undefined') {
             console.warn("RichTextContent class not loaded yet. Delaying factory execution.");
         }
-        const content = typeof RichTextContent !== 'undefined' 
+        const content = typeof RichTextContent !== 'undefined'
             ? new RichTextContent({ contentType: "markdown", sourceText: text })
             : null;
 
@@ -499,7 +499,7 @@ class PanelFactory {
                         { label: "Q4", value: 95 }
                     ]
                 }
-              })
+            })
             : null;
 
         return new PanelBuilder()
@@ -675,7 +675,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
     digestAndSplitPanel(panelId) {
         const panel = this.panels.get(panelId);
         if (!panel) return;
-        
+
         // Use duck typing checks to prevent "instanceof" dynamic load crashes
         const isRichText = panel.content && (panel.content.constructor.name === "RichTextContent");
         if (!isRichText) {
@@ -685,7 +685,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
         const rawText = panel.content.config.sourceText;
         const formatType = panel.content.config.contentType;
-        
+
         const digester = window.ContentDigester || window.Digester;
         if (!digester) {
             alert("Slicing failed: Content digestion engine is not loaded.");
@@ -751,8 +751,8 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                         w: panel.w,
                         h: panel.h,
                         title: panel.title,
-                        contentType: cName === "RichTextContent" ? "rich-text" : 
-                                     cName === "DataVizDashboardContent" ? "data-viz-dashboard" : "d3-chart"
+                        contentType: cName === "RichTextContent" ? "rich-text" :
+                            cName === "DataVizDashboardContent" ? "data-viz-dashboard" : "d3-chart"
                     };
 
                     if (cName === "RichTextContent") {
