@@ -121,6 +121,9 @@ class RichTextContent extends IPanelContent {
         if (data && data.sourceText !== undefined) {
             this.config.sourceText = data.sourceText;
             this.render(this.containerElement);
+            if (window.IntegratedGridManager) {
+                window.IntegratedGridManager.triggerStateChange();
+            }
         }
     }
 
@@ -278,6 +281,9 @@ class CodeSnippetContent extends IPanelContent {
         if (data && data.sourceText !== undefined) {
             this.config.sourceText = data.sourceText;
             this.render(this.containerElement);
+            if (window.IntegratedGridManager) {
+                window.IntegratedGridManager.triggerStateChange();
+            }
         }
     }
 
@@ -347,6 +353,9 @@ class D3ChartContent extends IPanelContent {
                 xAxis: this.config.data.xAxis || "label",
                 yAxis: this.config.data.yAxis || "value"
             });
+        }
+        if (window.IntegratedGridManager) {
+            window.IntegratedGridManager.triggerStateChange();
         }
     }
 
@@ -776,6 +785,9 @@ class DataVizDashboardContent extends IPanelContent {
             this.state.columns = Object.keys(this.state.data[0] || {});
             this.restoreUIState();
             this.renderChart();
+            if (window.IntegratedGridManager) {
+                window.IntegratedGridManager.triggerStateChange();
+            }
         }
     }
 

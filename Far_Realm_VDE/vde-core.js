@@ -483,6 +483,22 @@ class PanelFactory {
             .build();
     }
 
+    static createCodePanel(initialText = "") {
+        const text = initialText || `// Code Sanctuary\nfunction executeRitual() {\n    const progress = 100;\n    return progress;\n}`;
+        if (typeof CodeSnippetContent === 'undefined') {
+            console.warn("CodeSnippetContent class not loaded yet. Delaying factory execution.");
+        }
+        const content = typeof CodeSnippetContent !== 'undefined'
+            ? new CodeSnippetContent({ contentType:"code-snippet", sourceText: text })
+            : null;
+
+        return new PanelBuilder()
+            .setTitle("Code Snippet Panel")
+            .setDimensions(4, 8)
+            .setContent(content)
+            .build();
+    }
+
     static createChartPanel(chartType = "Bar Chart") {
         if (typeof D3ChartContent === 'undefined') {
             console.warn("D3ChartContent class not loaded yet. Delaying factory execution.");
@@ -619,20 +635,8 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
     addCodeWidget(initialText = "", bucketId = null) {
         const text = initialText || `// Code Sanctuary\nfunction executeRitual() {\n    const progress = 100;\n    return progress;\n}`;
-        if (typeof CodeSnippetContent === 'undefined') {
-            console.error("CodeSnippetContent not loaded yet.");
-            return null;
-        }
-        const content = new CodeSnippetContent({
-            sourceText: text
-        });
-
-        return this.createPanel({
-            title: "Code Snippet Panel",
-            content: content,
-            w: 4,
-            h: 8
-        }, bucketId);
+        const panel = PanelFactory.createCodePanel(initialText);
+        return this.registerAndPlacePanel(panel, bucketId);
     }
 
     registerAndPlacePanel(panel, bucketId) {
@@ -744,6 +748,16 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
             this.panels.forEach(panel => {
                 if (panel.bucketId === bucket.id) {
                     const cName = panel.content ? panel.content.constructor.name : "";
+
+                    let typeTag = "rich-text";
+                    if (cName === "CodeSnippetContent") {
+                        typeTag = "code-snippet";
+                    } else if (cName === "DataVizDashboardContent") {
+                        typeTag = "data-viz-dashboard";
+                    } else if (cName === "D3ChartContent") {
+                        typeTag = "d3-chart";
+                    }
+
                     const panelConfig = {
                         id: panel.id,
                         x: panel.x,
@@ -751,13 +765,16 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                         w: panel.w,
                         h: panel.h,
                         title: panel.title,
-                        contentType: cName === "RichTextContent" ? "rich-text" :
-                            cName === "DataVizDashboardContent" ? "data-viz-dashboard" : "d3-chart"
+                        contentType: typeTag
                     };
 
                     if (cName === "RichTextContent") {
                         panelConfig.contentConfig = {
                             contentType: panel.content.config.contentType,
+                            sourceText: panel.content.config.sourceText
+                        };
+                    } else if (cName === "CodeSnippetContent") {
+                        panelConfig.contentConfig = {
                             sourceText: panel.content.config.sourceText
                         };
                     } else if (cName === "DataVizDashboardContent") {
@@ -792,7 +809,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
     importVDE(jsonString) {
         try {
-            const payload = JSON.parse(jsonString);
+            const payload = (typeof jsonString === 'string') ? JSON.parse(jsonString) : jsonString;
             if (!payload) return false;
 
             this.clearAll();
@@ -808,6 +825,8 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                     let contentInstance = null;
                     if (p.contentType === "rich-text" && typeof RichTextContent !== 'undefined') {
                         contentInstance = new RichTextContent(p.contentConfig);
+                    } else if ((p.contentType === "code-snippet" || p.contentType === "code") && typeof CodeSnippetContent !== 'undefined') {
+                        contentInstance = new CodeSnippetContent(p.contentConfig);
                     } else if (p.contentType === "d3-chart" && typeof D3ChartContent !== 'undefined') {
                         contentInstance = new D3ChartContent(p.contentConfig);
                     } else if (p.contentType === "data-viz-dashboard" && typeof DataVizDashboardContent !== 'undefined') {
@@ -843,6 +862,8 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                             let contentInstance = null;
                             if (w.contentType === "rich-text" && typeof RichTextContent !== 'undefined') {
                                 contentInstance = new RichTextContent(w.contentConfig);
+                            } else if ((w.contentType === "code-snippet" || w.contentType === "code") && typeof CodeSnippetContent !== 'undefined') {
+                                contentInstance = new CodeSnippetContent(w.contentConfig);
                             } else if (w.contentType === "d3-chart" && typeof D3ChartContent !== 'undefined') {
                                 contentInstance = new D3ChartContent(w.contentConfig);
                             } else if (w.contentType === "data-viz-dashboard" && typeof DataVizDashboardContent !== 'undefined') {
@@ -858,7 +879,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                                     h: w.h,
                                     title: w.title,
                                     content: contentInstance
-                                }, b.id);
+                                }, bucket.id);
                             }
                         });
                     }
