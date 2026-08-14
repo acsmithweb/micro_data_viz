@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Narayah Governance V4 — Gridstack Bucket Testbed</title>
+    <title>Narayah Governance v0.1.0 — Unified Gridstack Workspace Testbed</title>
     
-    <!-- Dependencies Stylesheets -->
+    <!-- External CSS Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/gridstack@10.0.1/dist/gridstack.min.css" rel="stylesheet"/>
@@ -22,7 +22,7 @@
             overflow: hidden;
         }
 
-        /* THE CONTROL PANEL SIDEBAR */
+        /* CONTROL PANEL SIDEBAR */
         #control-sidebar {
             width: 340px;
             background-color: #181818;
@@ -87,6 +87,7 @@
 
         .btn-sacred:hover {
             background: #e06c00;
+            color: #fff;
         }
 
         .btn-secondary-vde {
@@ -99,6 +100,10 @@
             border-radius: 4px;
             cursor: pointer;
             transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
 
         .btn-secondary-vde:hover {
@@ -187,6 +192,22 @@
         .vde-markdown-preview li {
             margin-bottom: 3px;
         }
+
+        /* Custom scrollbar behavior for dark UI */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #101010;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2a2a2a;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff7b00;
+        }
     </style>
 </head>
 <body>
@@ -195,61 +216,58 @@
     <div id="control-sidebar">
         <div class="sidebar-header">
             <h1>Narayah VDE</h1>
-            <div style="font-size: 10px; color: #666; margin-top: 4px;">Virtue Execution Matrix // V0.0.8</div>
+            <div style="font-size: 10px; color: #666; margin-top: 4px;">Virtue Execution Matrix // v0.1.0 OOP</div>
         </div>
         
         <div class="sidebar-content">
             <div class="codex-instruction">
-                <i class="bi bi-info-circle-fill text-warning me-1"></i> <strong>Clerical Instruction:</strong><br/>
-                Add modular <strong>Buckets</strong> to isolate workspaces. Create panels and <strong>drag them between buckets</strong> to organize them. Update bucket settings programmatically to modify columns and spacing instantly.
+                <i class="bi bi-info-circle-fill text-warning me-1"></i>
+                <strong>Clerical Instruction:</strong> Add modular <em>Buckets</em> to isolate workspaces. Create panels, duplicate them via Clone (📋), or divide them via Digest (✂️). Drag panels between buckets to organize.
             </div>
-
-            <!-- Creation Actions -->
+        
             <div class="vde-action-group">
                 <button class="btn btn-sacred" id="summon-bucket-btn">
                     <i class="bi bi-folder-plus me-1"></i> Summon New Bucket
                 </button>
-                <button class="btn-secondary-vde" id="add-markdown-btn">
-                    <i class="bi bi-file-earmark-text-fill me-1 text-warning"></i> + Add Markdown Codex
+                <button class="btn btn-secondary-vde" id="add-markdown-btn">
+                    <i class="bi bi-file-earmark-text-fill text-warning"></i> + Add Markdown Codex
                 </button>
-                <button class="btn-secondary-vde" id="add-dashboard-btn">
-                    <i class="bi bi-file-earmark-bar-graph me-1 text-warning"></i> + Add Data Viz Dashboard
+                <button class="btn btn-secondary-vde" id="add-dashboard-btn">
+                    <i class="bi bi-file-earmark-bar-graph text-warning"></i> + Add Data Viz Dashboard
                 </button>
-                <div class="input-group input-group-sm">
+                <button class="btn btn-secondary-vde" id="add-code-btn">
+                    <i class="bi bi-code-slash me-1 text-warning"></i> + Add Code Snippet
+                </button>
+                <div class="input-group input-group-sm mt-1">
                     <span class="input-group-text bg-dark border-secondary text-muted font-monospace" style="font-size:10px;">Target Bucket</span>
-                    <select class="form-select bg-dark text-white border-secondary" id="target-bucket-select">
-                        <!-- Populated dynamically -->
-                    </select>
+                    <select class="form-select bg-dark text-white border-secondary" id="target-bucket-select"></select>
                 </div>
             </div>
 
             <hr style="border: 0; border-top: 1px solid #2a2a2a; margin: 10px 0;">
 
-            <!-- State Control -->
             <div style="font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px;">JSON Shadow State Config</div>
             <textarea class="vde-state-area" id="vde-json-io" placeholder="{ VDE JSON State Payload }"></textarea>
             
             <div style="display: flex; gap: 8px;">
-                <button class="btn-secondary-vde" id="export-vde-btn" style="flex: 1;">
-                    <i class="bi bi-download me-1"></i> Export
+                <button class="btn btn-secondary-vde" id="export-vde-btn" style="flex: 1; justify-content: center;">
+                    <i class="bi bi-download"></i> Export
                 </button>
-                <button class="btn-secondary-vde" id="import-vde-btn" style="flex: 1; border-color: #4CAF50; color: #4CAF50;">
-                    <i class="bi bi-upload me-1"></i> Import
+                <button class="btn btn-secondary-vde" id="import-vde-btn" style="flex: 1; justify-content: center; border-color: #4CAF50; color: #4CAF50;">
+                    <i class="bi bi-upload"></i> Import
                 </button>
             </div>
             
-            <button class="btn-secondary-vde" id="clear-all-btn" style="border-color: #f44336; color: #f44336; width: 100%;">
-                <i class="bi bi-trash3 me-1"></i> Clear Workspace
+            <button class="btn btn-secondary-vde" id="clear-all-btn" style="border-color: #f44336; color: #f44336; width: 100%; justify-content: center;">
+                <i class="bi bi-trash3"></i> Clear Workspace
             </button>
         </div>
     </div>
 
-    <!-- WORKSPACE CANVAS -->
-    <div id="vde-workspace-canvas">
-        <!-- Containers/Buckets will render here dynamically -->
-    </div>
+    <!-- WORKSPACE CANVAS AREA -->
+    <div id="vde-workspace-canvas"></div>
 
-    <!-- SUMMON BUCKET DIALOG MODAL -->
+    <!-- SUMMON BUCKET MODAL -->
     <div class="modal fade" id="summonBucketModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content bg-dark border-secondary text-white">
@@ -285,153 +303,76 @@
         </div>
     </div>
 
-    <!-- Core Dependencies -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <!-- DEPENDENCY INJECTIONS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gridstack@10.0.1/dist/gridstack-all.js"></script>
 
-    <!-- Narayah Core Integration Module (v0.0.8) -->
-    <script src="narayah-integration-v1.js"></script>
+    <!-- MODULAR PLUG-AND-PLAY ARCHITECTURE SCRIPTS -->
+    <script src="vde-adapters.js"></script>
+    <script src="vde-digester.js"></script>
+    <script src="vde-charts.js"></script>
+    <script src="vde-content.js"></script>
+    <script src="vde-core.js"></script>
 
-    <!-- Chart Registry Definitions -->
-    <script>
-        // Standard D3 base chart class
-        class VizChart {
-            constructor(containerElement, config = {}) {
-                this.container = d3.select(containerElement);
-                this.cfg = Object.assign({
-                    width: 300,
-                    height: 200,
-                    margin: { top: 15, right: 15, bottom: 35, left: 35 },
-                    xKey: "label",
-                    yKey: "value"
-                }, config);
-
-                this.svg = this.container.append("svg")
-                    .attr("width", "100%")
-                    .attr("height", "100%")
-                    .attr("viewBox", `0 0 ${this.cfg.width} ${this.cfg.height}`)
-                    .attr("preserveAspectRatio", "xMidYMid meet");
-
-                this.g = this.svg.append("g")
-                    .attr("transform", `translate(${this.cfg.margin.left}, ${this.cfg.margin.top})`);
-            }
-        }
-
-        class BarChart extends VizChart {
-            update({ data }) {
-                if (!data || data.length === 0) return;
-                this.g.selectAll("*").remove();
-
-                const margin = this.cfg.margin;
-                const width = this.cfg.width - margin.left - margin.right;
-                const height = this.cfg.height - margin.top - margin.bottom;
-
-                const x = d3.scaleBand()
-                    .domain(data.map(d => d[this.cfg.xKey]))
-                    .range([0, width])
-                    .padding(0.25);
-
-                const y = d3.scaleLinear()
-                    .domain([0, d3.max(data, d => d[this.cfg.yKey])])
-                    .nice()
-                    .range([height, 0]);
-
-                this.g.append("g")
-                    .attr("transform", `translate(0, ${height})`)
-                    .call(d3.axisBottom(x))
-                    .selectAll("text")
-                    .style("fill", "#888")
-                    .style("font-size", "10px");
-
-                this.g.append("g")
-                    .call(d3.axisLeft(y).ticks(5))
-                    .selectAll("text")
-                    .style("fill", "#888")
-                    .style("font-size", "10px");
-
-                this.g.selectAll(".domain").style("stroke", "#333");
-                this.g.selectAll(".tick line").style("stroke", "#333");
-
-                this.g.selectAll(".bar")
-                    .data(data)
-                    .enter().append("rect")
-                    .attr("class", "bar")
-                    .attr("x", d => x(d[this.cfg.xKey]))
-                    .attr("width", x.bandwidth())
-                    .attr("y", d => y(d[this.cfg.yKey]))
-                    .attr("height", d => height - y(d[this.cfg.yKey]))
-                    .attr("fill", this.cfg.color || "#ff7b00")
-                    .attr("rx", 3);
-            }
-        }
-
-        // Register default Bar Chart
-        window.CHART_REGISTRY = {
-            "Bar Chart": BarChart
-        };
-    </script>
-
-    <!-- Controller Script -->
+    <!-- VDE INITIALIZATION & EVENT BINDINGS -->
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            // Anchor Singleton Manager to workspace container
+            // 1. Bind IntegratedGridManager to the workspace canvas
             IntegratedGridManager.setContainer("#vde-workspace-canvas");
 
-            // Initialize default UI view state
-            const targetSelect = document.getElementById("target-bucket-select");
-            const summonModal = new bootstrap.Modal(document.getElementById('summonBucketModal'));
+            const jsonArea = document.getElementById("vde-json-io");
+            const targetBucketSelect = document.getElementById("target-bucket-select");
+            const summonModalEl = document.getElementById("summonBucketModal");
+            const bsModal = new bootstrap.Modal(summonModalEl);
 
-            function refreshBucketSelectDropdown() {
-                targetSelect.innerHTML = "";
+            // Helper: Synchronize target bucket options in sidebar select dropdown
+            function syncBucketDropdown() {
+                targetBucketSelect.innerHTML = "";
                 if (IntegratedGridManager.buckets.size === 0) {
                     const opt = document.createElement("option");
-                    opt.textContent = "(No buckets active)";
                     opt.value = "";
-                    targetSelect.appendChild(opt);
-                } else {
-                    IntegratedGridManager.buckets.forEach(bucket => {
-                        const opt = document.createElement("option");
-                        opt.value = bucket.id;
-                        opt.textContent = bucket.name;
-                        targetSelect.appendChild(opt);
-                    });
+                    opt.textContent = "-- No Buckets Available --";
+                    targetBucketSelect.appendChild(opt);
+                    return;
                 }
+
+                IntegratedGridManager.buckets.forEach((bucket, id) => {
+                    const opt = document.createElement("option");
+                    opt.value = id;
+                    opt.textContent = `${bucket.name} (ID: ${id})`;
+                    targetBucketSelect.appendChild(opt);
+                });
             }
 
-            // Hook state change pipeline
-            IntegratedGridManager.stateChangeListener = () => {
-                const exported = IntegratedGridManager.exportVDE();
-                document.getElementById("vde-json-io").value = exported;
-                refreshBucketSelectDropdown();
+            // Listen for VDE state changes (updates JSON preview and dropdowns)
+            IntegratedGridManager.stateChangeListener = (jsonState) => {
+                if (jsonArea) jsonArea.value = jsonState;
+                syncBucketDropdown();
             };
 
-            // Instantiate Default Initial State
-            const primaryBucket = IntegratedGridManager.createBucket("Primary Sanctuary", {
-                column: 12,
-                cellHeight: 25,
-                margin: 5
+            // Helper: Fetch selected target bucket ID
+            function getSelectedBucketId() {
+                const val = targetBucketSelect.value;
+                return val ? parseInt(val, 10) : null;
+            }
+
+            // 2. UI Event Handlers
+            
+            // Open Summon Bucket Modal
+            document.getElementById("summon-bucket-btn").addEventListener("click", () => {
+                bsModal.show();
             });
 
-            IntegratedGridManager.addMarkdownWidget(
-                `### Operational Report\n> "The software does not care for your feelings, and the system will not reward your mercy." - Riker Stonesoul\n\n*   **Multi-Bucket Support:** Active\n*   **Gridstack Layout Core:** V10 integration stabilized\n*   **State Transmigration:** Drag widgets seamlessly across bucket vessels\n\nDouble-click to modify this live!`, 
-                primaryBucket.id
-            );
-
-            IntegratedGridManager.addChartWidget("Bar Chart", primaryBucket.id);
-
-            // Hook UI Interactive Events
-            document.getElementById("summon-bucket-btn").onclick = () => {
-                document.getElementById("modal-bucket-name").value = `Sanctuary ${IntegratedGridManager.nextBucketId}`;
-                summonModal.show();
-            };
-
-            document.getElementById("modal-create-bucket-btn").onclick = () => {
-                const name = document.getElementById("modal-bucket-name").value;
-                const cols = parseInt(document.getElementById("modal-bucket-cols").value);
-                const height = parseInt(document.getElementById("modal-bucket-height").value);
-                const margin = parseInt(document.getElementById("modal-bucket-margin").value);
+            // Create Bucket from Modal Inputs
+            document.getElementById("modal-create-bucket-btn").addEventListener("click", () => {
+                const name = document.getElementById("modal-bucket-name").value || "Data Sanctuary";
+                const cols = parseInt(document.getElementById("modal-bucket-cols").value, 10) || 12;
+                const height = parseInt(document.getElementById("modal-bucket-height").value, 10) || 25;
+                const margin = parseInt(document.getElementById("modal-bucket-margin").value, 10) || 5;
 
                 IntegratedGridManager.createBucket(name, {
                     column: cols,
@@ -439,47 +380,52 @@
                     margin: margin
                 });
 
-                summonModal.hide();
-            };
+                bsModal.hide();
+            });
 
-            document.getElementById("add-markdown-btn").onclick = () => {
-                const targetId = parseInt(targetSelect.value);
-                IntegratedGridManager.addMarkdownWidget("", targetId || null);
-            };
+            // Widget Addition Buttons
+            document.getElementById("add-markdown-btn").addEventListener("click", () => {
+                IntegratedGridManager.addMarkdownWidget("", getSelectedBucketId());
+            });
 
-            document.getElementById("add-dashboard-btn").onclick = () => {
-                const targetId = parseInt(targetSelect.value);
-                IntegratedGridManager.addDashboardWidget(targetId || null);
-            };
+            document.getElementById("add-dashboard-btn").addEventListener("click", () => {
+                IntegratedGridManager.addDashboardWidget(getSelectedBucketId());
+            });
 
-            document.getElementById("clear-all-btn").onclick = () => {
-                if (confirm("Are you sure you want to purge the workspace matrix? This will erase all buckets and widgets.")) {
+            document.getElementById("add-code-btn").addEventListener("click", () => {
+                IntegratedGridManager.addCodeWidget("", getSelectedBucketId());
+            });
+
+            // Export / Import / Clear Workspace Controls
+            document.getElementById("export-vde-btn").addEventListener("click", () => {
+                const jsonState = IntegratedGridManager.exportVDE();
+                if (jsonArea) jsonArea.value = jsonState;
+            });
+
+            document.getElementById("import-vde-btn").addEventListener("click", () => {
+                const jsonString = jsonArea.value;
+                if (!jsonString) return;
+
+                const success = IntegratedGridManager.importVDE(jsonString);
+                if (!success) {
+                    alert("Import Failed: Invalid VDE JSON payload structure.");
+                }
+            });
+
+            document.getElementById("clear-all-btn").addEventListener("click", () => {
+                if (confirm("Are you sure you want to clear the entire workspace? All buckets and panels will be removed.")) {
                     IntegratedGridManager.clearAll();
                 }
-            };
+            });
 
-            document.getElementById("export-vde-btn").onclick = () => {
-                const exported = IntegratedGridManager.exportVDE();
-                document.getElementById("vde-json-io").value = exported;
-            };
-
-            document.getElementById("import-vde-btn").onclick = () => {
-                const jsonText = document.getElementById("vde-json-io").value;
-                if (!jsonText.trim()) {
-                    alert("Provide a valid JSON VDE payload first.");
-                    return;
-                }
-                const success = IntegratedGridManager.importVDE(jsonText);
-                if (success) {
-                    alert("VDE layout successfully hydrated.");
-                } else {
-                    alert("Import failed. Verify layout JSON syntax.");
-                }
-            };
-
-            // Trigger initial UI setup
-            IntegratedGridManager.triggerStateChange();
+            // 3. Initialize Default Workspace Bucket
+            IntegratedGridManager.createBucket("Primary Sanctuary", {
+                column: 12,
+                cellHeight: 25,
+                margin: 5
+            });
         });
     </script>
+
 </body>
 </html>
