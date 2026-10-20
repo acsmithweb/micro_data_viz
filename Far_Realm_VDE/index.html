@@ -43,7 +43,7 @@
         .sidebar-header h1 {
             margin: 0;
             font-size: 1.25rem;
-            color: #ff7b00;
+            color: var(--global-accent, #ff7b00);
             text-transform: uppercase;
             letter-spacing: 1px;
         }
@@ -63,7 +63,7 @@
             line-height: 1.5;
             background-color: #202020;
             padding: 10px;
-            border-left: 3px solid #ff7b00;
+            border-left: 3px solid var(--global-accent, #ff7b00);
             border-radius: 2px;
         }
 
@@ -74,7 +74,7 @@
         }
 
         .btn-sacred {
-            background: #ff7b00;
+            background: var(--global-accent, #ff7b00);
             color: #fff;
             border: none;
             padding: 10px 14px;
@@ -87,7 +87,7 @@
         }
 
         .btn-sacred:hover {
-            background: #e06c00;
+            background: var(--global-accent-dark, #e06c00);
             color: #fff;
         }
 
@@ -244,6 +244,12 @@
                 </button>
                 <button class="btn btn-secondary-vde" id="add-code-btn">
                     <i class="bi bi-code-slash me-1 text-warning"></i> + Add Code Snippet
+                </button>
+                <button class="btn btn-secondary-vde" id="add-ollama-btn">
+                    <i class="bi bi-cpu me-1 text-warning"></i> + Add Ollama AI Interface
+                </button>
+                <button class="btn btn-secondary-vde" id="add-obsidian-btn">
+                    <i class="bi bi-journal-code me-1 text-warning"></i> + Add Obsidian CLI
                 </button>
 
                 <!-- Style Customizer Trigger Button -->
@@ -406,6 +412,8 @@
 
     <!-- Step 2: VDE Adapters (Defensive Perimeter & Sanitization) -->
     <script src="vde-adapters.js"></script>
+    <script src="vde-ollama-adapter.js"></script>
+    <script src="vde-obsidian-adapter.js"></script>
 
     <!-- Step 3: Processing & Base Lineages (Strategies & Chart Interfaces) -->
     <script src="vde-digester.js"></script>
@@ -419,6 +427,7 @@
 
     <!-- Step 6: Core Layout Orchestration & Singletons (Highest Abstraction) -->
     <script src="vde-core.js"></script>
+    <script src="vde-service-registry.js"></script>
 
     <!-- VDE INITIALIZATION & VERIFICATION TEST SCRIPT -->
     <script>
@@ -495,6 +504,14 @@
                 manager.addCodeWidget("", getSelectedBucketId());
             });
 
+            document.getElementById("add-ollama-btn").addEventListener("click", () => {
+                manager.addOllamaWidget(getSelectedBucketId());
+            });
+
+            document.getElementById("add-obsidian-btn").addEventListener("click", () => {
+                manager.addObsidianCLIWidget(getSelectedBucketId());
+            });
+
             // 3. Dynamic Visual Style Customizer Controller
             const bgPicker = document.getElementById("picker-bg");
             const textPicker = document.getElementById("picker-text");
@@ -532,6 +549,11 @@
                 const memento = new window.VisualStyleMemento(styleData);
                 memento.applyToGlobalUI(document);
 
+                // Store current theme in manager for chart access
+                if (window.IntegratedGridManager) {
+                    window.IntegratedGridManager.currentTheme = styleData;
+                }
+
                 // Sync workspace panel instances if registered in manager
                 if (window.manager && window.manager.panels) {
                     window.manager.panels.forEach(panel => {
@@ -539,6 +561,16 @@
                         if (panel.el) {
                             const inner = panel.el.querySelector('.grid-stack-item-content');
                             if (inner) memento.applyToDOMElement(inner);
+                        }
+                        
+                        // Re-render charts with new theme
+                        if (panel.content && panel.content.chart) {
+                            if (typeof panel.content.render === 'function') {
+                                const bodyEl = panel.el.querySelector('.vde-panel-body');
+                                if (bodyEl) {
+                                    panel.content.render(bodyEl);
+                                }
+                            }
                         }
                     });
                 }

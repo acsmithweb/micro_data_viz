@@ -38,6 +38,26 @@ class VisualStyleMemento {
         };
     }
 
+    /**
+     * Utility to darken a hex color by a percentage
+     * @param {string} color - Hex color (e.g., "#ff7b00")
+     * @param {number} percent - Percentage to darken (0-100)
+     * @returns {string} - Darkened hex color
+     */
+    darkenColor(color, percent) {
+        const num = parseInt(color.replace("#", ""), 16);
+        const amt = Math.round(2.55 * percent);
+        const R = (num >> 16) - amt;
+        const G = (num >> 8 & 0x00FF) - amt;
+        const B = (num & 0x0000FF) - amt;
+        return "#" + (
+            0x1000000 +
+            (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+            (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+            (B < 255 ? (B < 1 ? 0 : B) : 255)
+        ).toString(16).slice(1);
+    }
+
     static deserialize(jsonState) {
         if (!jsonState) return new VisualStyleMemento();
 
@@ -96,6 +116,7 @@ class VisualStyleMemento {
         doc.documentElement.style.setProperty('--global-border', this._borderColor);
         doc.documentElement.style.setProperty('--global-text', this._textColor);
         doc.documentElement.style.setProperty('--global-accent', this._accentColor);
+        doc.documentElement.style.setProperty('--global-accent-dark', this.darkenColor(this._accentColor, 15));
 
         // Inject/Update dynamic CSS override tag in <head>
         let dynamicStyleTag = doc.getElementById('vde-dynamic-theme-override');
@@ -157,8 +178,33 @@ class VisualStyleMemento {
             .sidebar-header,
             .navbar-brand,
             .modal-title {
-                color: ${this._accentColor} !important;
                 border-bottom-color: ${this._borderColor} !important;
+            }
+            
+            .vde-panel-header,
+            .vde-bucket-title,
+            .sidebar-header h1,
+            .text-warning,
+            .bi.text-warning {
+                color: ${this._accentColor} !important;
+            }
+            
+            /* 5. Buttons & Interactive Elements */
+            .btn-sacred,
+            .btn-warning {
+                background-color: ${this._accentColor} !important;
+                border-color: ${this._accentColor} !important;
+            }
+            
+            .btn-sacred:hover,
+            .btn-warning:hover {
+                background-color: ${this.darkenColor(this._accentColor, 15)} !important;
+                border-color: ${this.darkenColor(this._accentColor, 15)} !important;
+            }
+            
+            /* 6. Bucket Header Left Border */
+            .vde-bucket-header {
+                border-left-color: ${this._accentColor} !important;
             }
         `;
 
