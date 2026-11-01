@@ -1,6 +1,6 @@
 /**
- * vde-content.js
- * Virtue Execution Matrix - Content Bridge Layer
+ * vde-content.js - v0.1.1
+ * Virtue Execution Matrix - Content Bridge Layer (Version 0.1.1)
  * Formulated with Utilitarian Spite under the Clerical Mandate of Project Narayah
  * Separates UI panel representation (Abstraction) from dynamic content loading (Implementation).
  */
@@ -19,6 +19,7 @@ class IPanelContent {
     }
 
     update(data) { }
+
     resize(width, height) { }
 
     clone() {
@@ -233,12 +234,14 @@ class CodeSnippetContent extends IPanelContent {
     triggerDigestion() {
         const rawText = this.config.sourceText || "";
         const digester = window.ContentDigester || window.Digester;
+
         if (!digester) {
             console.error("Narayah Digester engine not loaded.");
             return;
         }
 
         const fragments = digester.digest(rawText, "code");
+
         if (fragments.length <= 1) {
             alert("No natural boundaries (functions, classes) detected.");
             return;
@@ -246,6 +249,7 @@ class CodeSnippetContent extends IPanelContent {
 
         const manager = window.IntegratedGridManager;
         const parentPanel = this.panel;
+
         if (manager && parentPanel) {
             const bucketId = parentPanel.bucketId;
             manager.removePanel(parentPanel.id);
@@ -305,6 +309,7 @@ class D3ChartContent extends IPanelContent {
             this.chart.destroy();
             this.chart = null;
         }
+
         container.selectAll("*").remove();
 
         const chartType = this.config.chartType || "Bar Chart";
@@ -321,6 +326,7 @@ class D3ChartContent extends IPanelContent {
             }, themeColors);
 
             this.chart = new ChartClass(containerElement, chartConfig);
+
             if (this.config.data) {
                 this.chart.update({
                     data: this.config.data.data || this.config.data,
@@ -357,6 +363,7 @@ class D3ChartContent extends IPanelContent {
         if (this.chart && this.config.data) {
             const w = this.containerElement ? this.containerElement.clientWidth : 300;
             const h = this.containerElement ? this.containerElement.clientHeight : 200;
+
             this.chart.update({
                 data: this.config.data.data || this.config.data,
                 xAxis: this.config.data.xAxis || "label",
@@ -374,6 +381,7 @@ class D3ChartContent extends IPanelContent {
         if (this.chart && this.containerElement) {
             const w = width || this.containerElement.clientWidth || 300;
             const h = height || this.containerElement.clientHeight || 200;
+
             if (this.config.data) {
                 this.chart.update({
                     data: this.config.data.data || this.config.data,
@@ -412,6 +420,7 @@ class DataVizDashboardContent extends IPanelContent {
             xAxis: "",
             yAxis: "",
             transform: "Raw",
+            dateGranularity: "Raw", // <--- Version 0.1.1 Date Zoom Granularity State
             chartType: "Bar Chart",
             filters: []
         }, config.state || {});
@@ -422,21 +431,21 @@ class DataVizDashboardContent extends IPanelContent {
 <div class="vde-viz-dashboard h-100 d-flex flex-column" style="padding: 10px; background-color: #1a1a1a; color: #fff; font-size: 11px;">
     <!-- SECTION 1: DATA UTILITY INTERFACE -->
     <div class="row g-2 mb-2 align-items-end border-bottom border-secondary pb-2">
-        <div class="col-md-3">
-            <label class="form-label font-monospace text-muted small mb-1">1. Summon Dataset (CSV)</label>
+        <div class="col-md-2">
+            <label class="form-label font-monospace text-muted small mb-1">1. Summon CSV</label>
             <input type="file" class="form-control form-control-sm file-input bg-dark border-secondary text-white small" accept=".csv" />
         </div>
-        <div class="col-md-9 d-none config-controls">
+        <div class="col-md-10 d-none config-controls">
             <div class="row g-2">
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label font-monospace text-muted small mb-1">2. X-Axis (Label)</label>
                     <select class="form-select form-select-sm x-axis-menu bg-dark text-white border-secondary small"></select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label font-monospace text-muted small mb-1">3. Y-Axis (Metric)</label>
                     <select class="form-select form-select-sm y-axis-menu bg-dark text-white border-secondary small"></select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label font-monospace text-muted small mb-1">4. Aggregation</label>
                     <select class="form-select form-select-sm transform-menu bg-dark text-white border-secondary small">
                         <option value="Raw">Raw Rows (None)</option>
@@ -446,7 +455,18 @@ class DataVizDashboardContent extends IPanelContent {
                     </select>
                 </div>
                 <div class="col-md-3">
-                    <label class="form-label font-monospace text-muted small mb-1">5. Visual Lineage</label>
+                    <label class="form-label font-monospace text-muted small mb-1">5. Date Zoom</label>
+                    <select class="form-select form-select-sm date-granularity-menu bg-dark text-white border-secondary small">
+                        <option value="Raw">Raw (None)</option>
+                        <option value="Year">Year</option>
+                        <option value="Quarter">Quarter</option>
+                        <option value="Month">Month</option>
+                        <option value="Day">Day</option>
+                        <option value="Hour">Hour</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label font-monospace text-muted small mb-1">6. Visual Lineage</label>
                     <select class="form-select form-select-sm chart-type-menu bg-dark text-white border-secondary small">
                         <option value="Bar Chart">Bar Chart</option>
                         <option value="Line Chart">Line Chart</option>
@@ -459,6 +479,7 @@ class DataVizDashboardContent extends IPanelContent {
             </div>
         </div>
     </div>
+
     <!-- SECTION 2B: TABLE VIEW COLUMN SELECTION BAR -->
     <div class="d-none table-column-controls mb-2">
         <div class="d-flex align-items-center gap-2 bg-black bg-opacity-50 p-2 rounded border border-secondary flex-wrap">
@@ -468,6 +489,7 @@ class DataVizDashboardContent extends IPanelContent {
             <button class="btn btn-sm btn-outline-secondary deselect-all-cols-btn" style="padding: 1px 6px; font-size: 10px;">Clear All</button>
         </div>
     </div>
+
     <!-- SECTION 2: LOCAL FILTER NAVIGATION -->
     <div class="d-none config-controls mb-2">
         <div class="d-flex align-items-center gap-2 bg-black bg-opacity-50 p-2 rounded border border-secondary flex-wrap">
@@ -491,6 +513,7 @@ class DataVizDashboardContent extends IPanelContent {
             <div class="active-filters-container d-flex gap-1 align-items-center flex-wrap" style="margin-left: 10px;"></div>
         </div>
     </div>
+
     <!-- SECTION 3: VISUALIZATION CANVAS -->
     <div class="viz-container flex-grow-1 border border-secondary rounded bg-dark p-2 overflow-hidden position-relative" style="min-height: 180px;">
         <div class="text-center text-muted py-5 initial-message">
@@ -508,7 +531,6 @@ class DataVizDashboardContent extends IPanelContent {
         container.selectAll("*").remove();
         container.html(this.getHTMLTemplate());
         this.attachEvents();
-
         if (this.state.data && this.state.data.length > 0) {
             this.restoreUIState();
             this.renderChart();
@@ -546,6 +568,17 @@ class DataVizDashboardContent extends IPanelContent {
         if (transformMenu) {
             transformMenu.addEventListener("change", (e) => {
                 this.state.transform = e.target.value;
+                this.renderChart();
+                if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
+            });
+        }
+
+        // --- Date Zoom Granularity Event Listener (v0.1.1) ---
+        const dateMenu = el.querySelector(".date-granularity-menu");
+        if (dateMenu) {
+            dateMenu.value = this.state.dateGranularity || "Raw";
+            dateMenu.addEventListener("change", (e) => {
+                this.state.dateGranularity = e.target.value;
                 this.renderChart();
                 if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
             });
@@ -601,14 +634,12 @@ class DataVizDashboardContent extends IPanelContent {
     loadCSV(event) {
         const files = event.target.files;
         if (!files || files.length === 0) return;
-
         const file = files[0];
-
         const reader = new FileReader();
+
         reader.onload = (e) => {
             const text = e.target.result;
             const data = d3.csvParse(text);
-
             if (data && data.length > 0) {
                 this.state.data = data;
                 this.state.columns = data.columns || Object.keys(data[0] || {});
@@ -617,16 +648,16 @@ class DataVizDashboardContent extends IPanelContent {
                 this.state.yAxis = this.state.columns[1] || this.state.columns[0] || "";
                 this.state.filters = [];
                 this.state.transform = "Raw";
+                this.state.dateGranularity = "Raw";
                 this.state.chartType = "Bar Chart";
-
                 this.restoreUIState();
                 this.renderChart();
-
                 if (window.IntegratedGridManager) {
                     window.IntegratedGridManager.triggerStateChange();
                 }
             }
         };
+
         reader.readAsText(file);
         event.target.value = "";
     }
@@ -635,11 +666,14 @@ class DataVizDashboardContent extends IPanelContent {
         const el = this.containerElement;
         if (!el) return;
         el.querySelectorAll(".config-controls").forEach(c => c.classList.remove("d-none"));
+
         const initMsg = el.querySelector(".initial-message");
         if (initMsg) initMsg.classList.add("d-none");
+
         if (!this.state.selectedColumns || !Array.isArray(this.state.selectedColumns)) {
             this.state.selectedColumns = [...(this.state.columns || [])];
         }
+
         this.populateDropdowns();
         this.renderFilters();
         this.renderTableColumnControls();
@@ -695,6 +729,7 @@ class DataVizDashboardContent extends IPanelContent {
         const xMenu = el.querySelector(".x-axis-menu");
         const yMenu = el.querySelector(".y-axis-menu");
         const filterCol = el.querySelector(".filter-column");
+
         if (!xMenu || !yMenu || !filterCol) return;
 
         xMenu.innerHTML = "";
@@ -704,7 +739,6 @@ class DataVizDashboardContent extends IPanelContent {
         this.state.columns.forEach(col => {
             const xSelected = col === this.state.xAxis ? "selected" : "";
             const ySelected = col === this.state.yAxis ? "selected" : "";
-
             xMenu.insertAdjacentHTML("beforeend", `<option value="${col}" ${xSelected}>${col}</option>`);
             yMenu.insertAdjacentHTML("beforeend", `<option value="${col}" ${ySelected}>${col}</option>`);
             filterCol.insertAdjacentHTML("beforeend", `<option value="${col}">${col}</option>`);
@@ -712,6 +746,9 @@ class DataVizDashboardContent extends IPanelContent {
 
         const transformMenu = el.querySelector(".transform-menu");
         if (transformMenu) transformMenu.value = this.state.transform || "Raw";
+
+        const dateMenu = el.querySelector(".date-granularity-menu");
+        if (dateMenu) dateMenu.value = this.state.dateGranularity || "Raw";
 
         const chartTypeMenu = el.querySelector(".chart-type-menu");
         if (chartTypeMenu) chartTypeMenu.value = this.state.chartType || "Bar Chart";
@@ -721,6 +758,7 @@ class DataVizDashboardContent extends IPanelContent {
         const el = this.containerElement;
         const container = el.querySelector(".active-filters-container");
         if (!container) return;
+
         container.innerHTML = "";
 
         if (!this.state.filters || this.state.filters.length === 0) {
@@ -766,6 +804,7 @@ class DataVizDashboardContent extends IPanelContent {
             return filters.every(f => {
                 const val = row[f.col];
                 const filterVal = f.val;
+
                 if (f.op === 'null') return val === undefined || val === null || val === "";
                 if (f.op === 'notnull') return val !== undefined && val !== null && val !== "";
                 if (val === undefined || val === null) return false;
@@ -805,20 +844,23 @@ class DataVizDashboardContent extends IPanelContent {
         if (!s.data || s.data.length === 0) return;
 
         const filteredData = this.applyFilters(s.data, s.filters);
+
         let processedData;
-        if (s.transform && s.transform !== "Raw") {
-            processedData = window.getAggregateFunction ? window.getAggregateFunction(s.transform, filteredData, s.xAxis, s.yAxis) : filteredData;
+        if ((s.transform && s.transform !== "Raw") || (s.dateGranularity && s.dateGranularity !== "Raw")) {
+            processedData = window.getAggregateFunction 
+                ? window.getAggregateFunction(s.transform, filteredData, s.xAxis, s.yAxis, s.dateGranularity) 
+                : filteredData;
         } else {
             processedData = filteredData;
         }
 
         const ChartConstructor = window.CHART_REGISTRY ? window.CHART_REGISTRY[s.chartType] : null;
+
         if (ChartConstructor) {
             const width = canvas.clientWidth || 400;
             const height = canvas.clientHeight || 200;
             const themeColors = this.getThemeColors();
 
-            // Re-use chart instance if type matches, otherwise destroy and rebuild
             if (this.chart && !(this.chart instanceof ChartConstructor)) {
                 this.chart.destroy();
                 this.chart = null;
@@ -828,6 +870,7 @@ class DataVizDashboardContent extends IPanelContent {
                 const xKey = s.xAxis;
                 const stackKeys = Array.from(new Set(filteredData.map(d => String(d[s.yAxis]))));
                 const grouped = d3.group(filteredData, d => String(d[xKey]));
+
                 const stackedData = Array.from(grouped, ([xValue, rows]) => {
                     const row = { [xKey]: xValue };
                     stackKeys.forEach(k => row[k] = 0);
@@ -846,6 +889,7 @@ class DataVizDashboardContent extends IPanelContent {
                         stackKeys: stackKeys
                     }, themeColors));
                 }
+
                 this.chart.update({ data: stackedData, xAxis: s.xAxis, stackKeys: stackKeys, width, height });
             } else {
                 if (!this.chart) {
@@ -856,6 +900,7 @@ class DataVizDashboardContent extends IPanelContent {
                         yAxis: s.yAxis
                     }, themeColors));
                 }
+
                 this.chart.update({
                     data: processedData,
                     xAxis: s.xAxis,
@@ -915,7 +960,6 @@ class OllamaInterfaceContent extends IPanelContent {
         super(config);
         this.containerElement = null;
         this.adapter = window.OllamaAdapter ? new window.OllamaAdapter() : null;
-
         this.state = Object.assign({
             selectedModel: '',
             systemPrompt: 'You are a precise JSON-generating data assistant for local tool execution.',
@@ -955,10 +999,12 @@ class OllamaInterfaceContent extends IPanelContent {
             </select>
         </div>
     </div>
+
     <div class="mb-2">
         <label class="form-label font-monospace text-muted small mb-1">System Prompt (Context & Persona):</label>
         <textarea class="form-control form-control-sm system-prompt-input bg-dark text-white border-secondary font-monospace" rows="2" style="font-size: 10px;"></textarea>
     </div>
+
     <div class="row g-2 mb-2 pb-2 border-bottom border-secondary">
         <div class="col-6">
             <label class="form-label font-monospace text-muted small mb-1">Temperature: <span class="temp-value">0.2</span></label>
@@ -983,6 +1029,7 @@ class OllamaInterfaceContent extends IPanelContent {
             <input type="range" class="form-range repeat-slider" min="1.0" max="2.0" step="0.05" value="1.1" style="height: 6px;">
         </div>
     </div>
+
     <div class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
         <div class="d-flex justify-content-between align-items-center mb-1">
             <label class="form-label font-monospace text-muted small mb-0">Conversation Context:</label>
@@ -1048,6 +1095,7 @@ class OllamaInterfaceContent extends IPanelContent {
         const el = this.containerElement;
         const modelSelect = el.querySelector('.model-select');
         if (!modelSelect || !this.adapter) return;
+
         try {
             modelSelect.innerHTML = '<option value="">Loading...</option>';
             const models = await this.adapter.fetchModels();
@@ -1056,6 +1104,7 @@ class OllamaInterfaceContent extends IPanelContent {
                 modelSelect.innerHTML = '<option value="">No models found</option>';
                 return;
             }
+
             models.forEach(m => {
                 const opt = document.createElement('option');
                 opt.value = m.name;
@@ -1063,6 +1112,7 @@ class OllamaInterfaceContent extends IPanelContent {
                 if (m.name === this.state.selectedModel) opt.selected = true;
                 modelSelect.appendChild(opt);
             });
+
             if (!this.state.selectedModel && models.length > 0) {
                 this.state.selectedModel = models[0].name;
                 modelSelect.value = this.state.selectedModel;
@@ -1076,8 +1126,8 @@ class OllamaInterfaceContent extends IPanelContent {
         const el = this.containerElement;
         const userInput = el.querySelector('.user-input');
         const sendBtn = el.querySelector('.send-btn');
-        if (!userInput || !sendBtn || !this.adapter) return;
 
+        if (!userInput || !sendBtn || !this.adapter) return;
         const message = userInput.value.trim();
         if (!message || !this.state.selectedModel) return;
 
@@ -1095,6 +1145,7 @@ class OllamaInterfaceContent extends IPanelContent {
                 repeatPenalty: this.state.repeatPenalty,
                 responseFormat: this.state.responseFormat
             });
+
             userInput.value = '';
             this.state.conversationHistory = this.adapter.getHistory();
             this.renderChatHistory();
@@ -1126,6 +1177,7 @@ class OllamaInterfaceContent extends IPanelContent {
             msgDiv.appendChild(document.createTextNode(msg.content));
             chatContainer.appendChild(msgDiv);
         });
+
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
 
@@ -1133,6 +1185,7 @@ class OllamaInterfaceContent extends IPanelContent {
         const el = this.containerElement;
         const chatContainer = el.querySelector('.chat-history');
         if (!chatContainer) return;
+
         const msgDiv = document.createElement('div');
         msgDiv.className = 'message-bubble mb-2 p-2 rounded bg-warning bg-opacity-10 text-warning text-center';
         msgDiv.style.fontSize = '10px';
@@ -1156,7 +1209,6 @@ class ObsidianCLIContent extends IPanelContent {
         super(config);
         this.containerElement = null;
         this.adapter = window.ObsidianAdapter ? new window.ObsidianAdapter() : null;
-
         this.state = Object.assign({
             selectedCommand: 'file',
             vault: '',
@@ -1185,6 +1237,7 @@ class ObsidianCLIContent extends IPanelContent {
             <input type="text" class="form-control form-control-sm vault-input bg-dark text-white border-secondary font-monospace" placeholder="e.g., MyVault" style="font-size: 11px;">
         </div>
     </div>
+
     <div class="flex-grow-1 d-flex flex-column" style="min-height: 0;">
         <label class="form-label font-monospace text-muted small mb-1">Execution Output:</label>
         <div class="output-console flex-grow-1 bg-dark border border-secondary rounded p-2 overflow-y-auto font-monospace" style="font-size: 10px; color: #00ff66; white-space: pre-wrap;">

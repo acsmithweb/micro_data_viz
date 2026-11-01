@@ -1,5 +1,5 @@
 // ============================================================================
-// VIRTUE EXECUTION MATRIX // V0.2.0 OOP FIXED // VDE-CHARTS.JS
+// VIRTUE EXECUTION MATRIX // V0.1.1 OOP FIXED // VDE-CHART-V0-1-1.JS
 // ============================================================================
 // TARGET DOMAIN: 03_Entity_Actors (NPC Engine Visualizers)
 // PRIMARY AGENT: System Architect
@@ -14,17 +14,59 @@ function translate(x, y) {
 }
 
 /**
+ * Helper utility to format/truncate date values into time buckets.
+ */
+function formatDateByGranularity(dateVal, granularity) {
+    if (!dateVal || !granularity || granularity === "Raw") return String(dateVal);
+    
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return String(dateVal); // Fallback if invalid date string
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const hours = String(d.getHours()).padStart(2, '0');
+
+    switch (granularity) {
+        case "Year":
+            return `${year}`;
+        case "Quarter": {
+            const q = Math.floor(d.getMonth() / 3) + 1;
+            return `${year}-Q${q}`;
+        }
+        case "Month":
+            return `${year}-${month}`;
+        case "Day":
+            return `${year}-${month}-${day}`;
+        case "Hour":
+            return `${year}-${month}-${day} ${hours}:00`;
+        default:
+            return String(dateVal);
+    }
+}
+window.formatDateByGranularity = formatDateByGranularity;
+
+/**
  * Aggregation helper function for dataset transforms.
  */
-function getAggregateFunction(type, rows, xKey, yKey) {
+function getAggregateFunction(type, rows, xKey, yKey, dateGranularity = "Raw") {
     if (!rows || rows.length === 0) return [];
-    if (!type || type === "Raw") return rows;
 
-    const validRows = rows.filter(r => r && r[xKey] !== undefined && r[xKey] !== null);
+    // Pre-process rows to apply Date Granularity Truncation on xKey if specified
+    const processedRows = rows.map(r => {
+        if (!r || r[xKey] === undefined || r[xKey] === null) return r;
+        const formattedX = formatDateByGranularity(r[xKey], dateGranularity);
+        return Object.assign({}, r, { [xKey]: formattedX });
+    });
+
+    if (!type || type === "Raw") return processedRows;
+
+    const validRows = processedRows.filter(r => r && r[xKey] !== undefined && r[xKey] !== null);
     const grouped = d3.group(validRows, d => String(d[xKey]));
 
     return Array.from(grouped, ([key, groupRows]) => {
         const result = { [xKey]: key };
+
         if (type === "Count") {
             result[yKey] = groupRows.length;
         } else if (type === "Sum") {
@@ -32,6 +74,7 @@ function getAggregateFunction(type, rows, xKey, yKey) {
         } else if (type === "Avg") {
             result[yKey] = d3.mean(groupRows, d => +d[yKey] || 0) || 0;
         }
+
         return result;
     });
 }
@@ -44,6 +87,7 @@ class VizChart {
     constructor(containerElement, config = {}) {
         this.containerElement = containerElement;
         this.container = d3.select(containerElement);
+
         this.cfg = Object.assign({
             width: 400,
             height: 250,
@@ -58,6 +102,7 @@ class VizChart {
         }, config);
 
         this.updateDimensions(this.cfg.width, this.cfg.height);
+
         this.container.style("position", "relative");
 
         // Ensure a single persistent tooltip per container element
@@ -104,6 +149,17 @@ class VizChart {
 
         this.g = this.svg.append("g")
             .attr("transform", translate(this.cfg.margin.left, this.cfg.margin.top));
+
+        // Setup Zoom behavior for mouse-wheel panning and scaling
+        this.zoom = d3.zoom()
+            .scaleExtent([0.5, 10])
+            .on("zoom", (event) => {
+                if (this.g) {
+                    this.g.attr("transform", event.transform);
+                }
+            });
+
+        this.svg.call(this.zoom);
     }
 
     /**
@@ -114,6 +170,7 @@ class VizChart {
         this.cfg.height = Math.max(100, height || 250);
         this.innerWidth = Math.max(10, this.cfg.width - this.cfg.margin.left - this.cfg.margin.right);
         this.innerHeight = Math.max(10, this.cfg.height - this.cfg.margin.top - this.cfg.margin.bottom);
+
         if (this.svg) {
             this.svg.attr("viewBox", `0 0 ${this.cfg.width} ${this.cfg.height}`);
         }
@@ -209,6 +266,7 @@ class BarChart extends VizChart {
         if (width || height) this.updateDimensions(width, height);
         this.container.selectAll('.viz-table-wrapper').remove();
         if (this.svg) this.svg.style('display', 'block');
+
         this.g.selectAll("*").remove();
 
         if (!data || data.length === 0) {
@@ -281,6 +339,7 @@ class LineChart extends VizChart {
         if (width || height) this.updateDimensions(width, height);
         this.container.selectAll('.viz-table-wrapper').remove();
         if (this.svg) this.svg.style('display', 'block');
+
         this.g.selectAll("*").remove();
 
         if (!data || data.length === 0) {
@@ -364,6 +423,7 @@ class StackedBarChart extends VizChart {
         if (width || height) this.updateDimensions(width, height);
         this.container.selectAll('.viz-table-wrapper').remove();
         if (this.svg) this.svg.style('display', 'block');
+
         this.g.selectAll("*").remove();
 
         if (!data || data.length === 0 || !stackKeys || stackKeys.length === 0) {
@@ -372,6 +432,7 @@ class StackedBarChart extends VizChart {
         }
 
         const validStackKeys = stackKeys.map(String);
+
         const x = d3.scaleBand()
             .domain(data.map(d => String(d[xAxis])))
             .range([0, this.innerWidth])
@@ -382,6 +443,7 @@ class StackedBarChart extends VizChart {
             validStackKeys.forEach(k => sum += (+d[k] || 0));
             return sum;
         });
+
         const maxY = Math.max(1, isFinite(rawMax) ? rawMax : 1);
 
         const y = d3.scaleLinear()
@@ -451,9 +513,11 @@ class PieChart extends VizChart {
         if (width || height) this.updateDimensions(width, height);
         this.container.selectAll('.viz-table-wrapper').remove();
         if (this.svg) this.svg.style('display', 'block');
+
         this.g.selectAll("*").remove();
 
         const validData = (data || []).filter(d => (+d[yAxis] || 0) > 0);
+
         if (validData.length === 0) {
             this.renderEmptyState("No data matching active criteria");
             return;
@@ -503,6 +567,7 @@ class TableChart extends VizChart {
         }
 
         if (this.svg) this.svg.style("display", "none");
+
         const wrapper = this.container.append("div")
             .attr("class", "table-responsive viz-table-wrapper")
             .style("height", "100%")
@@ -554,6 +619,7 @@ class WordCloudChart extends VizChart {
         if (width || height) this.updateDimensions(width, height);
         this.container.selectAll('.viz-table-wrapper').remove();
         if (this.svg) this.svg.style('display', 'block');
+
         this.g.selectAll("*").remove();
 
         // Cancel any pending async layout computation before triggering a new run
@@ -579,6 +645,7 @@ class WordCloudChart extends VizChart {
 
         const rawMax = d3.max(words, d => d.size);
         const rawMin = d3.min(words, d => d.size);
+
         const minSize = Math.max(1, isFinite(rawMin) ? rawMin : 1);
         const maxSize = Math.max(minSize + 1, isFinite(rawMax) ? rawMax : minSize + 1);
 

@@ -1,8 +1,12 @@
 /**
- * vde-core.js (v6 - Clean Engine)
- * Target Domain: 01_Narrative_Orchestration & 99_System_Governance
- * Structural Role: Core Orchestration and Layout Management
- * Patterns: Observer, Singleton, GridBucket Container, BaseGridPanel UI Wrapper, Builder, Factory
+ * vde-core-v0-1-1.js
+ * Virtue Execution Matrix - Core Layout Orchestration & Workspace Governance
+ * Version 0.1.1
+ * 
+ * Features:
+ * - Fixed importVDE / exportVDE state serialization & panel rehydration
+ * - Synchronized ID counters to avoid panel collisions upon import
+ * - Full state preservation for DataVizDashboardContent, OllamaInterfaceContent, and ObsidianCLIContent
  */
 
 class WorkspaceSubject {
@@ -113,6 +117,7 @@ class BaseGridPanel {
         if (this.content) {
             this.content.render(body);
         }
+
         return el;
     }
 
@@ -191,17 +196,6 @@ class GridBucket {
         const actionsDiv = document.createElement("div");
         actionsDiv.className = "d-flex align-items-center gap-2";
 
-        const exportBtn = document.createElement("button");
-        exportBtn.className = "btn btn-sm btn-outline-info";
-        exportBtn.style.fontSize = "11px";
-        exportBtn.style.padding = "2px 8px";
-        exportBtn.innerHTML = '<i class="bi bi-file-earmark-code me-1"></i> Export HTML';
-        exportBtn.title = "Export this Bucket as a Standalone HTML Document";
-        exportBtn.onclick = () => {
-            this.exportBucketHTML();
-        };
-        actionsDiv.appendChild(exportBtn);
-
         const configBtn = document.createElement("button");
         configBtn.className = "btn btn-sm btn-outline-warning";
         configBtn.style.fontSize = "11px";
@@ -239,10 +233,11 @@ class GridBucket {
         const gridElement = document.createElement("div");
         gridElement.className = "grid-stack";
         gridElement.id = "grid-stack-" + this.id;
+
         gridContainer.appendChild(gridElement);
         bucketCard.appendChild(gridContainer);
-        workspace.appendChild(bucketCard);
 
+        workspace.appendChild(bucketCard);
         this.el = bucketCard;
 
         const gridOptions = {
@@ -330,21 +325,17 @@ class GridBucket {
 
     updateOptions(newOptions = {}) {
         this.options = Object.assign({}, this.options, newOptions);
-
         if (newOptions.name) {
             this.name = newOptions.name;
         }
-
         if (this.el) {
             const titleEl = this.el.querySelector(".vde-bucket-title");
             if (titleEl) titleEl.textContent = this.name;
-
             const badgeEl = this.el.querySelector(".badge");
             if (badgeEl) {
                 badgeEl.textContent = "Cols: " + this.options.column + " | Cell: " + this.options.cellHeight + "px";
             }
         }
-
         if (this.grid) {
             if (newOptions.column !== undefined) {
                 this.grid.column(parseInt(newOptions.column, 10) || 12);
@@ -369,9 +360,7 @@ class GridBucket {
                 this.grid.enableResize(!newOptions.disableResize);
             }
         }
-
         this.notifyAllPanelsResize();
-
         if (window.IntegratedGridManager) {
             window.IntegratedGridManager.triggerStateChange();
         }
@@ -403,145 +392,6 @@ class GridBucket {
         }
     }
 
-    exportBucketHTML() {
-        const manager = window.IntegratedGridManager;
-        if (!manager) return;
-
-        // Filter panels belonging ONLY to this bucket
-        const bucketPanels = Array.from(manager.panels.values()).filter(p => p.bucketId === this.id);
-
-        const serializedPanels = bucketPanels.map(p => {
-            let contentConfig = {};
-            let contentType = null;
-            if (p.content) {
-                contentType = p.content.constructor.name;
-                if (contentType === "RichTextContent" || contentType === "CodeSnippetContent") {
-                    contentConfig = {
-                        contentType: p.content.config ? p.content.config.contentType : "markdown",
-                        sourceText: p.content.config ? p.content.config.sourceText : ""
-                    };
-                } else if (contentType === "D3ChartContent") {
-                    contentConfig = {
-                        chartType: p.content.config ? p.content.config.chartType : "Bar Chart",
-                        chartConfig: p.content.config ? p.content.config.chartConfig : {},
-                        data: p.content.config ? p.content.config.data : null
-                    };
-                } else if (contentType === "DataVizDashboardContent") {
-                    contentConfig = {
-                        state: JSON.parse(JSON.stringify(p.content.state || {}))
-                    };
-                } else if (contentType === "OllamaInterfaceContent" || contentType === "ObsidianCLIContent") {
-                    contentConfig = {
-                        state: JSON.parse(JSON.stringify(p.content.state || {}))
-                    };
-                }
-            }
-            return {
-                id: p.id,
-                x: p.x,
-                y: p.y,
-                w: p.w,
-                h: p.h,
-                title: p.title,
-                contentType: contentType,
-                config: contentConfig
-            };
-        });
-
-        const bucketData = {
-            id: this.id,
-            name: this.name,
-            options: this.options,
-            panels: serializedPanels
-        };
-
-        const jsonBucketData = JSON.stringify(bucketData, null, 2);
-
-        const htmlLines = [
-            '<!DOCTYPE html>',
-            '<html lang="en">',
-            '<head>',
-            '    <meta charset="UTF-8">',
-            '    <meta name="viewport" content="width=device-width, initial-scale=1.0">',
-            '    <title>VDE Bucket Export - ' + this.escapeHtml(this.name) + '</title>',
-            '    <!-- External CSS Dependencies -->',
-            '    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">',
-            '    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">',
-            '    <link href="https://cdn.jsdelivr.net/npm/gridstack@10.0.1/dist/gridstack.min.css" rel="stylesheet" />',
-            '    <style>',
-            '        body { margin: 0; padding: 0; background-color: #121212; color: #e0e0e0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; display: flex; height: 100vh; overflow: hidden; }',
-            '        #vde-workspace-canvas { flex-grow: 1; position: relative; background-color: #101010; padding: 25px; overflow-y: auto; height: 100%; }',
-            '        .grid-stack { background: rgba(0, 0, 0, 0.2); border-radius: 4px; min-height: 120px; border: 1px dashed #222; }',
-            '        .vde-bucket-card { border: 1px solid #333; background-color: #151515; border-radius: 6px; overflow: hidden; margin-bottom: 1.5rem; }',
-            '        .vde-bucket-header { background-color: #0d0d0d; border-bottom: 1px solid #2a2a2a; padding: 0.75rem 1rem; }',
-            '    </style>',
-            '</head>',
-            '<body>',
-            '    <div id="vde-workspace-canvas"></div>',
-            '',
-            '    <!-- External Laying & Rendering Engines -->',
-            '    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>',
-            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>',
-            '    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script>',
-            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>',
-            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>',
-            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/gridstack/10.0.1/gridstack-all.js"></script>',
-            '',
-            '    <!-- VDE Module Scripts -->',
-            '    <script src="vde-charts.js"></script>',
-            '    <script src="vde-content.js"></script>',
-            '    <script src="vde-core.js"></script>',
-            '',
-            '    <script>',
-            '        const BUCKET_DATA = ' + jsonBucketData + ';',
-            '',
-            '        document.addEventListener("DOMContentLoaded", () => {',
-            '            const manager = window.IntegratedGridManager;',
-            '            if (!manager) return;',
-            '            manager.setContainer("#vde-workspace-canvas");',
-            '',
-            '            if (BUCKET_DATA) {',
-            '                const bucket = manager.createBucket(BUCKET_DATA.name, BUCKET_DATA.options);',
-            '                if (BUCKET_DATA.panels && BUCKET_DATA.panels.length > 0) {',
-            '                    BUCKET_DATA.panels.forEach(pData => {',
-            '                        let contentInst = null;',
-            '                        if (pData.contentType === "RichTextContent") {',
-            '                            contentInst = new RichTextContent(pData.config);',
-            '                        } else if (pData.contentType === "CodeSnippetContent") {',
-            '                            contentInst = new CodeSnippetContent(pData.config);',
-            '                        } else if (pData.contentType === "D3ChartContent") {',
-            '                            contentInst = new D3ChartContent(pData.config);',
-            '                        } else if (pData.contentType === "DataVizDashboardContent") {',
-            '                            contentInst = new DataVizDashboardContent(pData.config);',
-            '                        } else if (pData.contentType === "OllamaInterfaceContent") {',
-            '                            contentInst = new OllamaInterfaceContent(pData.config);',
-            '                        } else if (pData.contentType === "ObsidianCLIContent") {',
-            '                            contentInst = new ObsidianCLIContent(pData.config);',
-            '                        }',
-            '                        const panel = new BaseGridPanel(pData.id, pData.x, pData.y, pData.w, pData.h, pData.title, contentInst);',
-            '                        manager.registerAndPlacePanel(panel, bucket.id);',
-            '                    });',
-            '                }',
-            '            }',
-            '        });',
-            '    </script>',
-            '</body>',
-            '</html>'
-        ];
-
-        const htmlContent = htmlLines.join("\n");
-        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        const cleanName = (this.name || "bucket").toLowerCase().replace(/[^a-z0-9]+/g, "-");
-        a.download = "vde-bucket-" + this.id + "-" + cleanName + ".html";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
-
     escapeHtml(unsafe) {
         if (!unsafe) return "";
         return String(unsafe)
@@ -555,15 +405,18 @@ class GridBucket {
 
 class PanelBuilder {
     constructor() { this.reset(); }
+
     reset() {
         this.config = { id: null, x: 0, y: 0, w: 4, h: 6, title: "Panel", content: null };
         return this;
     }
+
     setId(id) { this.config.id = id; return this; }
     setCoordinates(x, y) { this.config.x = x; this.config.y = y; return this; }
     setDimensions(w, h) { this.config.w = w; this.config.h = h; return this; }
     setTitle(title) { this.config.title = title; return this; }
     setContent(contentInstance) { this.config.content = contentInstance; return this; }
+
     build() {
         const panel = new BaseGridPanel(this.config.id, this.config.x, this.config.y, this.config.w, this.config.h, this.config.title, this.config.content);
         this.reset();
@@ -573,15 +426,17 @@ class PanelBuilder {
 
 class PanelFactory {
     static createMarkdownPanel(initialText = "") {
-        const text = initialText || "### Codex Unit\\nDouble-click to write markdown.";
+        const text = initialText || "### Codex Unit\nDouble-click to write markdown.";
         const content = typeof RichTextContent !== 'undefined' ? new RichTextContent({ contentType: "markdown", sourceText: text }) : null;
         return new PanelBuilder().setTitle("Codex Panel").setDimensions(4, 8).setContent(content).build();
     }
+
     static createCodePanel(initialText = "") {
-        const text = initialText || "// Code Sanctuary\\nfunction executeRitual() {\\n    return 100;\\n}";
+        const text = initialText || "// Code Sanctuary\nfunction executeRitual() {\n    return 100;\n}";
         const content = typeof CodeSnippetContent !== 'undefined' ? new CodeSnippetContent({ contentType: "code-snippet", sourceText: text }) : null;
         return new PanelBuilder().setTitle("Code Snippet Panel").setDimensions(4, 8).setContent(content).build();
     }
+
     static createChartPanel(chartType = "Bar Chart") {
         const content = typeof D3ChartContent !== 'undefined' ? new D3ChartContent({
             chartType: chartType,
@@ -592,14 +447,17 @@ class PanelFactory {
         }) : null;
         return new PanelBuilder().setTitle(chartType + " Panel").setDimensions(5, 10).setContent(content).build();
     }
+
     static createDashboardPanel() {
         const content = typeof DataVizDashboardContent !== 'undefined' ? new DataVizDashboardContent() : null;
         return new PanelBuilder().setTitle("Dynamic Analysis Sanctuary").setDimensions(12, 14).setContent(content).build();
     }
+
     static createOllamaPanel() {
         const content = typeof OllamaInterfaceContent !== 'undefined' ? new OllamaInterfaceContent() : null;
         return new PanelBuilder().setTitle("Ollama AI Interface").setDimensions(6, 12).setContent(content).build();
     }
+
     static createObsidianCLIPanel() {
         const content = typeof ObsidianCLIContent !== 'undefined' ? new ObsidianCLIContent() : null;
         return new PanelBuilder().setTitle("Obsidian CLI Controller").setDimensions(6, 12).setContent(content).build();
@@ -644,8 +502,8 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
         panel.id = panel.id || this.nextPanelId++;
         if (panel.id >= this.nextPanelId) this.nextPanelId = panel.id + 1;
-
         panel.bucketId = targetBucket.id;
+
         this.panels.set(panel.id, panel);
         targetBucket.addWidget(panel);
         this.triggerStateChange();
@@ -655,15 +513,19 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
     addMarkdownWidget(initialText = "", bucketId = null) {
         return this.registerAndPlacePanel(PanelFactory.createMarkdownPanel(initialText), bucketId);
     }
+
     addDashboardWidget(bucketId = null) {
         return this.registerAndPlacePanel(PanelFactory.createDashboardPanel(), bucketId);
     }
+
     addCodeWidget(initialText = "", bucketId = null) {
         return this.registerAndPlacePanel(PanelFactory.createCodePanel(initialText), bucketId);
     }
+
     addOllamaWidget(bucketId = null) {
         return this.registerAndPlacePanel(PanelFactory.createOllamaPanel(), bucketId);
     }
+
     addObsidianCLIWidget(bucketId = null) {
         return this.registerAndPlacePanel(PanelFactory.createObsidianCLIPanel(), bucketId);
     }
@@ -713,7 +575,6 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
         const activeId = targetBucketId && this.buckets.has(targetBucketId) ? targetBucketId : this.buckets.keys().next().value;
         bucketSelect.value = activeId;
-
         this.loadBucketFormValues(activeId);
 
         bucketSelect.onchange = (e) => {
@@ -728,7 +589,6 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
     loadBucketFormValues(bucketId) {
         const bucket = this.buckets.get(bucketId);
         if (!bucket) return;
-
         const opts = bucket.options;
         document.getElementById("vde-config-name").value = bucket.name || "";
         document.getElementById("vde-config-column").value = opts.column || 12;
@@ -842,7 +702,6 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
             const bucketSelect = document.getElementById("vde-config-bucket-select");
             const bucketId = parseInt(bucketSelect.value, 10);
             const bucket = this.buckets.get(bucketId);
-
             if (bucket) {
                 const newOpts = {
                     name: document.getElementById("vde-config-name").value.trim(),
@@ -855,9 +714,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                     disableResize: document.getElementById("vde-config-disable-resize").checked,
                     animate: document.getElementById("vde-config-animate").checked
                 };
-
                 bucket.updateOptions(newOpts);
-
                 const bsModal = bootstrap.Modal.getInstance(this.configModalEl);
                 if (bsModal) bsModal.hide();
             }
@@ -866,7 +723,7 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 
     exportVDEState() {
         return {
-            vde_version: "4.1-OOP-Integrated",
+            vde_version: "0.1.1-OOP-Integrated",
             timestamp: new Date().toISOString(),
             buckets: Array.from(this.buckets.values()).map(b => ({
                 id: b.id,
@@ -874,22 +731,241 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
                 options: b.options,
                 panels: Array.from(this.panels.values())
                     .filter(p => p.bucketId === b.id)
-                    .map(p => ({
-                        id: p.id,
-                        x: p.x,
-                        y: p.y,
-                        w: p.w,
-                        h: p.h,
-                        title: p.title,
-                        contentType: p.content ? p.content.constructor.name : null,
-                        config: p.content ? (p.content.config || p.content.state || {}) : {}
-                    }))
+                    .map(p => {
+                        let contentConfig = {};
+                        let contentType = p.content ? p.content.constructor.name : null;
+
+                        if (p.content) {
+                            if (p.content.state) {
+                                contentConfig = JSON.parse(JSON.stringify(p.content.state));
+                            } else if (p.content.config) {
+                                contentConfig = JSON.parse(JSON.stringify(p.content.config));
+                            }
+                        }
+
+                        return {
+                            id: p.id,
+                            x: p.x,
+                            y: p.y,
+                            w: p.w,
+                            h: p.h,
+                            title: p.title,
+                            contentType: contentType,
+                            config: contentConfig
+                        };
+                    })
             }))
         };
     }
 
     exportVDE() {
         return JSON.stringify(this.exportVDEState(), null, 2);
+    }
+
+    importVDE(jsonPayload) {
+        try {
+            const payload = (typeof jsonPayload === 'string') ? JSON.parse(jsonPayload) : jsonPayload;
+            if (!payload || !Array.isArray(payload.buckets)) {
+                console.error("[VDE Import Error] Invalid payload structure: missing 'buckets' array.");
+                return false;
+            }
+
+            // Clear current layout and reset registry maps
+            this.clearAll();
+
+            let maxBucketId = 0;
+            let maxPanelId = 0;
+
+            payload.buckets.forEach(bData => {
+                const bucket = this.createBucket(bData.name, bData.options);
+                if (bData.id > maxBucketId) maxBucketId = bData.id;
+
+                if (bucket && Array.isArray(bData.panels)) {
+                    bData.panels.forEach(pData => {
+                        if (pData.id > maxPanelId) maxPanelId = pData.id;
+
+                        let contentInst = null;
+                        const cConfig = pData.config || {};
+
+                        if (pData.contentType === "RichTextContent" && typeof window.RichTextContent !== 'undefined') {
+                            contentInst = new window.RichTextContent(cConfig);
+                        } else if (pData.contentType === "CodeSnippetContent" && typeof window.CodeSnippetContent !== 'undefined') {
+                            contentInst = new window.CodeSnippetContent(cConfig);
+                        } else if (pData.contentType === "D3ChartContent" && typeof window.D3ChartContent !== 'undefined') {
+                            contentInst = new window.D3ChartContent(cConfig);
+                        } else if (pData.contentType === "DataVizDashboardContent" && typeof window.DataVizDashboardContent !== 'undefined') {
+                            contentInst = new window.DataVizDashboardContent({ state: cConfig.state || cConfig });
+                        } else if (pData.contentType === "OllamaInterfaceContent" && typeof window.OllamaInterfaceContent !== 'undefined') {
+                            contentInst = new window.OllamaInterfaceContent({ state: cConfig.state || cConfig });
+                        } else if (pData.contentType === "ObsidianCLIContent" && typeof window.ObsidianCLIContent !== 'undefined') {
+                            contentInst = new window.ObsidianCLIContent({ state: cConfig.state || cConfig });
+                        }
+
+                        const panel = new BaseGridPanel(
+                            pData.id,
+                            pData.x,
+                            pData.y,
+                            pData.w,
+                            pData.h,
+                            pData.title,
+                            contentInst
+                        );
+
+                        this.registerAndPlacePanel(panel, bucket.id);
+                    });
+                }
+            });
+
+            // Adjust auto-increment ID counters to avoid collisions on new creations
+            if (maxBucketId >= this.nextBucketId) this.nextBucketId = maxBucketId + 1;
+            if (maxPanelId >= this.nextPanelId) this.nextPanelId = maxPanelId + 1;
+
+            this.triggerStateChange();
+            return true;
+        } catch (err) {
+            console.error("[VDE Import Exception]", err);
+            return false;
+        }
+    }
+
+
+    exportStaticDashboardHTML(jsonState = null) {
+        let payload;
+        try {
+            if (jsonState) {
+                payload = (typeof jsonState === 'string') ? JSON.parse(jsonState) : jsonState;
+            } else {
+                payload = this.exportVDEState();
+            }
+        } catch (e) {
+            payload = this.exportVDEState();
+        }
+
+        if (!payload || !Array.isArray(payload.buckets)) {
+            alert("Invalid VDE state payload for static export.");
+            return;
+        }
+
+        const jsonPayloadStr = JSON.stringify(payload, null, 2);
+
+        const htmlLines = [
+            '<!DOCTYPE html>',
+            '<html lang="en">',
+            '<head>',
+            '    <meta charset="UTF-8">',
+            '    <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+            '    <title>VDE Static Dashboard Report</title>',
+            '    <!-- External CSS Dependencies -->',
+            '    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">',
+            '    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">',
+            '    <style>',
+            '        body { margin: 0; padding: 0; background-color: #121212; color: #e0e0e0; font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif; }',
+            '        .vde-static-container { padding: 25px; max-width: 1600px; margin: 0 auto; }',
+            '        .vde-bucket-card { border: 1px solid #333; background-color: #151515; border-radius: 6px; overflow: hidden; margin-bottom: 2rem; }',
+            '        .vde-bucket-header { background-color: #0d0d0d; border-bottom: 1px solid #2a2a2a; padding: 0.75rem 1rem; border-left: 4px solid #ff7b00; }',
+            '        .static-grid-container { display: grid; grid-template-columns: repeat(12, 1fr); gap: 15px; padding: 15px; }',
+            '        .static-panel-card { background-color: #1a1a1a; border: 1px solid #333; border-radius: 4px; display: flex; flex-direction: column; overflow: hidden; min-height: 250px; }',
+            '        .static-panel-header { background-color: #0d0d0d; border-bottom: 1px solid #2a2a2a; padding: 6px 10px; font-size: 11px; font-weight: 600; color: #ff7b00; }',
+            '        .static-panel-body { flex-grow: 1; padding: 10px; position: relative; overflow: auto; }',
+            '        @media (max-width: 768px) { .static-panel-card { grid-column: span 12 !important; } }',
+            '        @media print { .no-print { display: none !important; } body { background-color: #fff; color: #000; } }',
+            '    </style>',
+            '</head>',
+            '<body>',
+            '    <div class="no-print p-3 bg-dark border-bottom border-secondary d-flex justify-content-between align-items-center">',
+            '        <div class="font-monospace text-warning fw-bold fs-6"><i class="bi bi-layout-dashboard me-2"></i>VDE Static Dashboard Report</div>',
+            '        <button class="btn btn-sm btn-outline-warning font-monospace" onclick="window.print()"><i class="bi bi-printer me-1"></i> Print / Save PDF</button>',
+            '    </div>',
+            '    <div class="vde-static-container" id="static-dashboard-root"></div>',
+            '',
+            '    <!-- External Laying & Rendering Engines -->',
+            '    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>',
+            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>',
+            '    <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.5/build/d3.layout.cloud.min.js"></script>',
+            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>',
+            '    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>',
+            '',
+            '    <!-- VDE Runtime Libraries -->',
+            '    <script src="vde-chart-v0-1-1.js"></script>',
+            '    <script src="vde-content-v0-1-1.js"></script>',
+            '    <script src="vde-core-v0-1-1.js"></script>',
+            '',
+            '    <script>',
+            '        const VDE_STATE = ' + jsonPayloadStr + ';',
+            '',
+            '        document.addEventListener("DOMContentLoaded", () => {',
+            '            const root = document.getElementById("static-dashboard-root");',
+            '            if (!root || !VDE_STATE || !Array.isArray(VDE_STATE.buckets)) return;',
+            '',
+            '            VDE_STATE.buckets.forEach(bucketData => {',
+            '                const bucketCard = document.createElement("div");',
+            '                bucketCard.className = "vde-bucket-card";',
+            '',
+            '                const bHeader = document.createElement("div");',
+            '                bHeader.className = "vde-bucket-header d-flex justify-content-between align-items-center";',
+            '                bHeader.innerHTML = `<span class="fw-bold fs-6 text-warning"><i class="bi bi-folder2-open me-2"></i>${bucketData.name || "Bucket"}</span>`;',
+            '                bucketCard.appendChild(bHeader);',
+            '',
+            '                const grid = document.createElement("div");',
+            '                grid.className = "static-grid-container";',
+            '',
+            '                if (Array.isArray(bucketData.panels)) {',
+            '                    bucketData.panels.forEach(pData => {',
+            '                        const panelCard = document.createElement("div");',
+            '                        panelCard.className = "static-panel-card";',
+            '                        const spanCol = Math.min(12, Math.max(1, pData.w || 4));',
+            '                        panelCard.style.gridColumn = `span ${spanCol}`;',
+            '                        if (pData.h) panelCard.style.minHeight = `${Math.max(200, pData.h * 30)}px`;',
+            '',
+            '                        const pHeader = document.createElement("div");',
+            '                        pHeader.className = "static-panel-header";',
+            '                        pHeader.textContent = pData.title || ("Panel " + pData.id);',
+            '                        panelCard.appendChild(pHeader);',
+            '',
+            '                        const pBody = document.createElement("div");',
+            '                        pBody.className = "static-panel-body";',
+            '                        panelCard.appendChild(pBody);',
+            '',
+            '                        let contentInst = null;',
+            '                        const cConfig = pData.config || {};',
+            '                        if (pData.contentType === "RichTextContent" && typeof window.RichTextContent !== "undefined") {',
+            '                            contentInst = new window.RichTextContent(cConfig);',
+            '                        } else if (pData.contentType === "CodeSnippetContent" && typeof window.CodeSnippetContent !== "undefined") {',
+            '                            contentInst = new window.CodeSnippetContent(cConfig);',
+            '                        } else if (pData.contentType === "D3ChartContent" && typeof window.D3ChartContent !== "undefined") {',
+            '                            contentInst = new window.D3ChartContent(cConfig);',
+            '                        } else if (pData.contentType === "DataVizDashboardContent" && typeof window.DataVizDashboardContent !== "undefined") {',
+            '                            contentInst = new window.DataVizDashboardContent({ state: cConfig.state || cConfig });',
+            '                        } else if (pData.contentType === "OllamaInterfaceContent" && typeof window.OllamaInterfaceContent !== "undefined") {',
+            '                            contentInst = new window.OllamaInterfaceContent({ state: cConfig.state || cConfig });',
+            '                        } else if (pData.contentType === "ObsidianCLIContent" && typeof window.ObsidianCLIContent !== "undefined") {',
+            '                            contentInst = new window.ObsidianCLIContent({ state: cConfig.state || cConfig });',
+            '                        }',
+            '                        if (contentInst) {',
+            '                            contentInst.render(pBody);',
+            '                        }',
+            '                        grid.appendChild(panelCard);',
+            '                    });',
+            '                }',
+            '                bucketCard.appendChild(grid);',
+            '                root.appendChild(bucketCard);',
+            '            });',
+            '        });',
+            '    </script>',
+            '</body>',
+            '</html>'
+        ];
+
+        const htmlContent = htmlLines.join("\n");
+        const blob = new Blob([htmlContent], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "vde-static-dashboard.html";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
     }
 
     triggerStateChange() {
@@ -902,4 +978,10 @@ class IntegratedGridManagerClass extends WorkspaceSubject {
 }
 
 const IntegratedGridManager = new IntegratedGridManagerClass();
+window.WorkspaceSubject = WorkspaceSubject;
+window.BaseGridPanel = BaseGridPanel;
+window.GridBucket = GridBucket;
+window.PanelBuilder = PanelBuilder;
+window.PanelFactory = PanelFactory;
+window.IntegratedGridManagerClass = IntegratedGridManagerClass;
 window.IntegratedGridManager = IntegratedGridManager;
