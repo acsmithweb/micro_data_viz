@@ -408,6 +408,7 @@ class DataVizDashboardContent extends IPanelContent {
         this.state = Object.assign({
             data: [],
             columns: [],
+            selectedColumns: [],
             xAxis: "",
             yAxis: "",
             transform: "Raw",
@@ -456,6 +457,15 @@ class DataVizDashboardContent extends IPanelContent {
                     </select>
                 </div>
             </div>
+        </div>
+    </div>
+    <!-- SECTION 2B: TABLE VIEW COLUMN SELECTION BAR -->
+    <div class="d-none table-column-controls mb-2">
+        <div class="d-flex align-items-center gap-2 bg-black bg-opacity-50 p-2 rounded border border-secondary flex-wrap">
+            <span class="font-monospace text-info me-1"><i class="bi bi-layout-three-columns"></i> Visible Columns:</span>
+            <div class="table-column-checkboxes d-flex gap-2 align-items-center flex-wrap"></div>
+            <button class="btn btn-sm btn-outline-info select-all-cols-btn" style="padding: 1px 6px; font-size: 10px;">Select All</button>
+            <button class="btn btn-sm btn-outline-secondary deselect-all-cols-btn" style="padding: 1px 6px; font-size: 10px;">Clear All</button>
         </div>
     </div>
     <!-- SECTION 2: LOCAL FILTER NAVIGATION -->
@@ -545,6 +555,27 @@ class DataVizDashboardContent extends IPanelContent {
         if (chartTypeMenu) {
             chartTypeMenu.addEventListener("change", (e) => {
                 this.state.chartType = e.target.value;
+                this.renderTableColumnControls();
+                this.renderChart();
+                if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
+            });
+        }
+
+        const selectAllColsBtn = el.querySelector(".select-all-cols-btn");
+        if (selectAllColsBtn) {
+            selectAllColsBtn.addEventListener("click", () => {
+                this.state.selectedColumns = [...(this.state.columns || [])];
+                this.renderTableColumnControls();
+                this.renderChart();
+                if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
+            });
+        }
+
+        const deselectAllColsBtn = el.querySelector(".deselect-all-cols-btn");
+        if (deselectAllColsBtn) {
+            deselectAllColsBtn.addEventListener("click", () => {
+                this.state.selectedColumns = [];
+                this.renderTableColumnControls();
                 this.renderChart();
                 if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
             });
@@ -581,6 +612,7 @@ class DataVizDashboardContent extends IPanelContent {
             if (data && data.length > 0) {
                 this.state.data = data;
                 this.state.columns = data.columns || Object.keys(data[0] || {});
+                this.state.selectedColumns = [...this.state.columns];
                 this.state.xAxis = this.state.columns[0] || "";
                 this.state.yAxis = this.state.columns[1] || this.state.columns[0] || "";
                 this.state.filters = [];
@@ -605,8 +637,57 @@ class DataVizDashboardContent extends IPanelContent {
         el.querySelectorAll(".config-controls").forEach(c => c.classList.remove("d-none"));
         const initMsg = el.querySelector(".initial-message");
         if (initMsg) initMsg.classList.add("d-none");
+        if (!this.state.selectedColumns || !Array.isArray(this.state.selectedColumns)) {
+            this.state.selectedColumns = [...(this.state.columns || [])];
+        }
         this.populateDropdowns();
         this.renderFilters();
+        this.renderTableColumnControls();
+    }
+
+    renderTableColumnControls() {
+        const el = this.containerElement;
+        if (!el) return;
+
+        const tableControls = el.querySelector(".table-column-controls");
+        if (!tableControls) return;
+
+        if (this.state.chartType === "Table Chart" && this.state.columns && this.state.columns.length > 0) {
+            tableControls.classList.remove("d-none");
+            const container = el.querySelector(".table-column-checkboxes");
+            if (!container) return;
+            container.innerHTML = "";
+
+            if (!Array.isArray(this.state.selectedColumns)) {
+                this.state.selectedColumns = [...this.state.columns];
+            }
+
+            this.state.columns.forEach(col => {
+                const isSelected = this.state.selectedColumns.includes(col);
+                const pill = document.createElement("span");
+                pill.className = `badge ${isSelected ? 'bg-info text-dark' : 'bg-dark text-muted border border-secondary'} font-monospace user-select-none`;
+                pill.style.cursor = "pointer";
+                pill.style.fontSize = "10px";
+                pill.style.padding = "4px 8px";
+                pill.innerHTML = `<i class="bi ${isSelected ? 'bi-check-square-fill' : 'bi-square'} me-1"></i>${col}`;
+
+                pill.onclick = (e) => {
+                    e.stopPropagation();
+                    if (isSelected) {
+                        this.state.selectedColumns = this.state.selectedColumns.filter(c => c !== col);
+                    } else {
+                        this.state.selectedColumns.push(col);
+                    }
+                    this.renderTableColumnControls();
+                    this.renderChart();
+                    if (window.IntegratedGridManager) window.IntegratedGridManager.triggerStateChange();
+                };
+
+                container.appendChild(pill);
+            });
+        } else {
+            tableControls.classList.add("d-none");
+        }
     }
 
     populateDropdowns() {
@@ -779,6 +860,7 @@ class DataVizDashboardContent extends IPanelContent {
                     data: processedData,
                     xAxis: s.xAxis,
                     yAxis: s.yAxis,
+                    selectedColumns: s.selectedColumns,
                     width,
                     height
                 });

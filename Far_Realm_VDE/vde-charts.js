@@ -493,16 +493,16 @@ class PieChart extends VizChart {
  * CONCRETE TABLE CHART CLASS
  */
 class TableChart extends VizChart {
-    update({ data, xAxis, yAxis }) {
+    update({ data, xAxis, yAxis, selectedColumns }) {
         this.container.selectAll(".viz-table-wrapper").remove();
 
         if (!data || data.length === 0) {
-            this.svg.style("display", "block");
+            if (this.svg) this.svg.style("display", "block");
             this.renderEmptyState("No data matching active criteria");
             return;
         }
 
-        this.svg.style("display", "none");
+        if (this.svg) this.svg.style("display", "none");
         const wrapper = this.container.append("div")
             .attr("class", "table-responsive viz-table-wrapper")
             .style("height", "100%")
@@ -512,9 +512,19 @@ class TableChart extends VizChart {
             .attr("class", "table table-dark table-striped table-hover table-bordered font-monospace text-start small mt-2")
             .style("margin", "0");
 
+        // Determine which columns to display
+        let cols = (selectedColumns && Array.isArray(selectedColumns) && selectedColumns.length > 0)
+            ? selectedColumns
+            : [xAxis, yAxis].filter(Boolean);
+
+        if (cols.length === 0 && data.length > 0) {
+            cols = Object.keys(data[0]);
+        }
+
         const thead = table.append("thead").append("tr");
-        thead.append("th").style("color", this.getPrimaryColor()).text(xAxis);
-        thead.append("th").style("color", this.getPrimaryColor()).text(yAxis);
+        cols.forEach(col => {
+            thead.append("th").style("color", this.getPrimaryColor()).text(col);
+        });
 
         const tbody = table.append("tbody");
         const rows = tbody.selectAll("tr")
@@ -522,8 +532,17 @@ class TableChart extends VizChart {
             .enter()
             .append("tr");
 
-        rows.append("td").text(d => d[xAxis]);
-        rows.append("td").text(d => (+d[yAxis] || 0).toLocaleString());
+        rows.each(function(d) {
+            const tr = d3.select(this);
+            cols.forEach(col => {
+                const rawVal = d[col];
+                const numVal = +rawVal;
+                const displayVal = (!isNaN(numVal) && rawVal !== "" && rawVal !== null && typeof rawVal !== 'boolean')
+                    ? numVal.toLocaleString()
+                    : (rawVal !== undefined && rawVal !== null ? String(rawVal) : "");
+                tr.append("td").text(displayVal);
+            });
+        });
     }
 }
 
