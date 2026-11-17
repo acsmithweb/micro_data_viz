@@ -1,0 +1,6 @@
+{
+  "name": "VDE Dashboard Studio",
+  "description": "Lightweight standalone browser-based Vibe Development Environment utilizing D3.js, GridStack, and Bootstrap for rapid prototyping and modular data visualization layouts.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

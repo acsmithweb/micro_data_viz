@@ -1,0 +1,599 @@
+<!doctype html>
+<html lang="en" data-bs-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VDE Dashboard Studio — Modular D3.js &amp; GridStack Workspace</title>
+  <meta
+    name="description"
+    content="Lightweight standalone browser-based Vibe Development Environment utilizing D3.js, GridStack, and Bootstrap for rapid prototyping and modular data visualization layouts."
+  />
+  <meta property="og:title" content="VDE Dashboard Studio — Modular D3.js & GridStack Workspace" />
+  <meta
+    property="og:description"
+    content="Lightweight standalone browser-based Vibe Development Environment utilizing D3.js, GridStack, and Bootstrap for rapid prototyping and modular data visualization layouts."
+  />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap"
+    rel="stylesheet"
+  />
+
+  <!-- External Styles (Browser-Native, Zero Build Required) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/gridstack@10.0.1/dist/gridstack.min.css" rel="stylesheet" />
+
+  <style>
+    :root {
+      --global-bg: #121316;
+      --global-surface: #16181d;
+      --global-panel: #1c1e24;
+      --global-border: #2a2d35;
+      --global-text: #e2e4e9;
+      --global-accent: #ff7b00;
+      --global-accent-dark: #d96900;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background-color: var(--global-bg);
+      color: var(--global-text);
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .font-mono {
+      font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace !important;
+    }
+
+    .tabular-nums {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .vde-shell {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+    }
+
+    /* Sidebar */
+    #control-sidebar {
+      width: 300px;
+      min-width: 300px;
+      background-color: var(--global-surface);
+      border-right: 1px solid var(--global-border);
+      display: flex;
+      flex-direction: column;
+      transition: width 0.2s ease, min-width 0.2s ease, opacity 0.15s ease;
+      z-index: 20;
+      overflow: hidden;
+    }
+
+    #control-sidebar.collapsed {
+      width: 0;
+      min-width: 0;
+      border-right: none;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--global-border);
+      background-color: var(--global-bg);
+    }
+
+    .sidebar-brand {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      color: var(--global-accent);
+      margin: 0;
+    }
+
+    .sidebar-subtitle {
+      font-size: 11px;
+      color: #8b909d;
+      margin-top: 2px;
+    }
+
+    .sidebar-content {
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1 1 auto;
+      overflow-y: auto;
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #7e8492;
+      margin-top: 4px;
+    }
+
+    .btn-vde-primary {
+      background-color: var(--global-accent);
+      color: #111317;
+      border: 1px solid var(--global-accent);
+      font-weight: 600;
+      font-size: 12px;
+      padding: 7px 12px;
+      white-space: nowrap;
+    }
+
+    .btn-vde-primary:hover {
+      background-color: var(--global-accent-dark);
+      border-color: var(--global-accent-dark);
+      color: #111317;
+    }
+
+    .btn-vde-item {
+      background-color: var(--global-panel);
+      color: var(--global-text);
+      border: 1px solid var(--global-border);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 11px;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      white-space: nowrap;
+      transition: border-color 0.15s ease, background-color 0.15s ease;
+    }
+
+    .btn-vde-item:hover {
+      border-color: var(--global-accent);
+      background-color: #23262e;
+      color: #ffffff;
+    }
+
+    .vde-btn-offline {
+      opacity: 0.85;
+    }
+
+    .vde-state-area {
+      background-color: #0d0e11;
+      color: #a6e3a1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      border: 1px solid var(--global-border);
+      border-radius: 6px;
+      padding: 8px;
+      height: 128px;
+      resize: vertical;
+      width: 100%;
+    }
+
+    /* Main Workspace Column */
+    .vde-main {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      height: 100%;
+      background-color: var(--global-bg);
+    }
+
+    .vde-topbar {
+      height: 48px;
+      min-height: 48px;
+      padding: 0 16px;
+      background-color: var(--global-surface);
+      border-bottom: 1px solid var(--global-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .vde-notice {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--global-border);
+      background-color: var(--global-panel);
+      white-space: nowrap;
+    }
+
+    #vde-workspace-canvas {
+      flex: 1 1 auto;
+      overflow-y: auto;
+      padding: 18px;
+      background-color: var(--global-bg);
+      background-image: radial-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      background-size: 22px 22px;
+    }
+
+    /* Buckets & Panels */
+    .vde-bucket-card {
+      background-color: rgba(22, 24, 29, 0.78);
+      border: 1px solid var(--global-border);
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .vde-bucket-header {
+      padding: 9px 14px;
+      background-color: var(--global-surface);
+      border-bottom: 1px solid var(--global-border);
+    }
+
+    .grid-stack {
+      min-height: 140px;
+    }
+
+    .grid-stack-item-content {
+      border-radius: 6px !important;
+      overflow: hidden !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    }
+
+    /* Gallery Cards */
+    .vde-gallery-card {
+      background-color: var(--global-panel);
+      transition: border-color 0.15s ease, transform 0.12s ease;
+    }
+
+    .vde-gallery-card:hover {
+      border-color: var(--global-accent) !important;
+      transform: translateY(-1px);
+      background-color: #23262f;
+    }
+
+    /* Markdown Styling inside Panels */
+    .vde-markdown-preview h1,
+    .vde-markdown-preview h2,
+    .vde-markdown-preview h3 {
+      color: var(--global-accent);
+      font-weight: 600;
+      margin-top: 6px;
+      margin-bottom: 8px;
+      font-size: 1rem;
+    }
+
+    .vde-markdown-preview blockquote {
+      border-left: 2px solid var(--global-accent);
+      margin: 8px 0;
+      padding: 4px 10px;
+      color: #a6abb8;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .vde-markdown-preview pre {
+      background-color: #0e1014;
+      padding: 8px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--global-border);
+      overflow-x: auto;
+    }
+
+    .vde-markdown-preview code {
+      font-family: 'JetBrains Mono', monospace;
+      color: #f9e2af;
+      font-size: 11px;
+    }
+
+    /* D3 Chart Axis & Scrollbars */
+    .viz-svg text {
+      user-select: none;
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: #101114;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #2f333d;
+      border-radius: 3px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--global-accent);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="vde-shell">
+    <!-- Left Control Sidebar -->
+    <aside id="control-sidebar" aria-label="Workspace Controls">
+      <div class="sidebar-header">
+        <h1 class="sidebar-brand">VDE Dashboard Studio</h1>
+        <div class="sidebar-subtitle">Standalone Browser Workspace</div>
+      </div>
+
+      <div class="sidebar-content">
+        <button type="button" class="btn btn-vde-primary w-100" id="summon-bucket-btn">
+          <i class="bi bi-folder-plus me-1"></i>New Bucket
+        </button>
+
+        <div class="input-group input-group-sm">
+          <span class="input-group-text bg-dark border-secondary text-secondary font-mono" style="font-size: 10px;">Target</span>
+          <select class="form-select bg-dark text-white border-secondary font-mono" id="target-bucket-select" style="font-size: 11px;"></select>
+        </div>
+
+        <div class="sidebar-section-label">Visualization &amp; Panels</div>
+
+        <div class="d-flex flex-column gap-2">
+          <button type="button" class="btn btn-vde-item" id="add-dashboard-btn">
+            <i class="bi bi-bar-chart-line-fill text-warning"></i>
+            <span>Add Data Explorer</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="open-chart-gallery-btn">
+            <i class="bi bi-grid-fill text-warning"></i>
+            <span>Browse 20 D3 Charts</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="add-markdown-btn">
+            <i class="bi bi-file-earmark-text text-warning"></i>
+            <span>Add Markdown Notes</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="add-code-btn">
+            <i class="bi bi-code-slash text-warning"></i>
+            <span>Add Code Snippet</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="add-html-btn">
+            <i class="bi bi-filetype-html text-warning"></i>
+            <span>Add HTML Renderer</span>
+          </button>
+        </div>
+
+        <div class="sidebar-section-label">Local Integrations</div>
+
+        <div class="d-flex flex-column gap-2">
+          <button type="button" class="btn btn-vde-item" id="add-obsidian-btn">
+            <i class="bi bi-journal-code text-warning"></i>
+            <span class="service-btn-label">Add Obsidian CLI</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="add-ollama-btn">
+            <i class="bi bi-cpu text-warning"></i>
+            <span class="service-btn-label">Add Ollama AI</span>
+          </button>
+          <button type="button" class="btn btn-vde-item" id="btn-theme-config" data-bs-toggle="modal" data-bs-target="#themeConfigModal">
+            <i class="bi bi-palette text-warning"></i>
+            <span>Theme &amp; Palette</span>
+          </button>
+        </div>
+
+        <hr class="border-secondary my-1" />
+
+        <div class="sidebar-section-label">Workspace JSON State</div>
+        <textarea class="vde-state-area" id="vde-json-io" placeholder="{ Workspace JSON State }"></textarea>
+
+        <div class="d-flex gap-2">
+          <button type="button" class="btn btn-vde-item flex-fill justify-content-center" id="export-vde-btn">
+            <i class="bi bi-download"></i>
+            <span>Export</span>
+          </button>
+          <button type="button" class="btn btn-vde-item flex-fill justify-content-center border-success text-success" id="import-vde-btn">
+            <i class="bi bi-upload"></i>
+            <span>Import</span>
+          </button>
+        </div>
+
+        <button type="button" class="btn btn-sm btn-outline-danger w-100" id="clear-all-btn" style="font-size: 12px;">
+          <i class="bi bi-trash3 me-1"></i>Clear Workspace
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Area -->
+    <div class="vde-main">
+      <header class="vde-topbar">
+        <div class="d-flex align-items-center gap-3 min-w-0">
+          <button
+            type="button"
+            class="btn btn-sm btn-outline-secondary"
+            id="sidebar-toggle-btn"
+            aria-expanded="true"
+            title="Toggle sidebar"
+          >
+            <i class="bi bi-layout-sidebar"></i>
+          </button>
+          <div class="d-flex align-items-center gap-2 min-w-0">
+            <span class="fw-semibold text-white" style="font-size: 13px;">Workspace</span>
+            <span class="text-secondary">/</span>
+            <span id="workspace-metrics" class="font-mono text-secondary tabular-nums text-truncate" style="font-size: 11.5px;">0 Buckets · 0 Panels</span>
+          </div>
+          <span id="vde-status-notice" class="vde-notice font-mono d-none"></span>
+        </div>
+
+        <div class="d-flex align-items-center gap-2 shrink-0">
+          <button type="button" class="btn btn-sm btn-outline-secondary text-light" id="topbar-theme-btn" style="font-size: 12px; white-space: nowrap;">
+            <i class="bi bi-palette me-1 text-warning"></i>Theme
+          </button>
+          <button type="button" class="btn btn-sm btn-vde-primary" id="topbar-add-bucket-btn" style="font-size: 12px; padding: 4px 12px;">
+            <i class="bi bi-folder-plus me-1"></i>Add Bucket
+          </button>
+        </div>
+      </header>
+
+      <main id="vde-workspace-canvas"></main>
+    </div>
+  </div>
+
+  <!-- Summon Bucket Modal -->
+  <div class="modal fade" id="summonBucketModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark border-secondary text-white">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title text-warning font-mono fs-6">
+            <i class="bi bi-folder-plus me-2"></i>Create Workspace Bucket
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="font-size: 12px;">
+          <div class="mb-3">
+            <label class="form-label font-mono text-secondary small">Bucket Name</label>
+            <input type="text" class="form-control form-control-sm bg-black text-white border-secondary" id="modal-bucket-name" value="Analytics Bucket" />
+          </div>
+          <div class="row g-2 mb-3">
+            <div class="col-4">
+              <label class="form-label font-mono text-secondary small">Columns (1–12)</label>
+              <input type="number" class="form-control form-control-sm bg-black text-white border-secondary" id="modal-bucket-cols" value="12" min="1" max="12" />
+            </div>
+            <div class="col-4">
+              <label class="form-label font-mono text-secondary small">Row Height (px)</label>
+              <input type="number" class="form-control form-control-sm bg-black text-white border-secondary" id="modal-bucket-height" value="30" min="15" max="120" />
+            </div>
+            <div class="col-4">
+              <label class="form-label font-mono text-secondary small">Gap (px)</label>
+              <input type="number" class="form-control form-control-sm bg-black text-white border-secondary" id="modal-bucket-margin" value="6" min="0" max="24" />
+            </div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" id="modal-bucket-float" />
+            <label class="form-check-label font-mono text-secondary" for="modal-bucket-float">Enable Float Mode (free vertical placement)</label>
+          </div>
+        </div>
+        <div class="modal-footer border-secondary">
+          <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-sm btn-vde-primary" id="modal-create-bucket-btn">Create Bucket</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 20-Chart D3 Gallery Modal -->
+  <div class="modal fade" id="chartGalleryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+      <div class="modal-content bg-dark border-secondary text-white">
+        <div class="modal-header border-secondary">
+          <div>
+            <h5 class="modal-title text-warning font-mono fs-6 mb-0">
+              <i class="bi bi-grid-fill me-2"></i>OOP D3.js Visualization Suite (20 Charts)
+            </h5>
+            <div class="text-secondary" style="font-size: 11px;">All charts extend the modular VizChart base class with shared scales, zoom, tooltips, and palette hooks.</div>
+          </div>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body d-flex flex-column gap-3">
+          <div class="d-flex align-items-center justify-content-between gap-2 flex-wrap">
+            <div id="gallery-category-tabs" class="d-flex flex-wrap gap-1"></div>
+            <div class="d-flex align-items-center gap-2">
+              <label class="font-mono text-secondary" style="font-size: 11px;">Initial Dataset:</label>
+              <select id="gallery-dataset-select" class="form-select form-select-sm bg-black text-white border-secondary font-mono" style="width: auto; font-size: 11px;"></select>
+            </div>
+          </div>
+          <div id="gallery-chart-grid" class="row g-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Visual Style Customizer Modal -->
+  <div class="modal fade" id="themeConfigModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content bg-dark border-secondary text-white shadow-lg">
+        <div class="modal-header border-secondary">
+          <h5 class="modal-title fw-semibold text-warning font-mono fs-6">
+            <i class="bi bi-sliders me-2"></i>Theme &amp; Chart Palette
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body" style="font-size: 12px;">
+          <div class="mb-3">
+            <div class="font-mono text-secondary mb-2" style="font-size: 10.5px; text-transform: uppercase;">Presets</div>
+            <div id="theme-presets-container" class="d-flex flex-wrap gap-2"></div>
+          </div>
+
+          <hr class="border-secondary" />
+
+          <div class="font-mono text-secondary mb-2" style="font-size: 10.5px; text-transform: uppercase;">UI Base Palette</div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label for="picker-bg" class="form-label small mb-1">Canvas Background</label>
+              <input type="color" class="form-control form-control-color w-100" id="picker-bg" value="#121316" />
+            </div>
+            <div class="col-6">
+              <label for="picker-text" class="form-label small mb-1">Global Text</label>
+              <input type="color" class="form-control form-control-color w-100" id="picker-text" value="#e2e4e9" />
+            </div>
+            <div class="col-6">
+              <label for="picker-border" class="form-label small mb-1">Borders &amp; Dividers</label>
+              <input type="color" class="form-control form-control-color w-100" id="picker-border" value="#2a2d35" />
+            </div>
+            <div class="col-6">
+              <label for="picker-accent" class="form-label small mb-1">Primary Accent</label>
+              <input type="color" class="form-control form-control-color w-100" id="picker-accent" value="#ff7b00" />
+            </div>
+          </div>
+
+          <hr class="border-secondary" />
+
+          <div class="font-mono text-secondary mb-2" style="font-size: 10.5px; text-transform: uppercase;">Data Chart Series Palette</div>
+          <div class="d-flex justify-content-between align-items-center gap-2">
+            <input type="color" class="form-control form-control-color chart-picker flex-fill" id="picker-chart-1" value="#89b4fa" />
+            <input type="color" class="form-control form-control-color chart-picker flex-fill" id="picker-chart-2" value="#f5c2e7" />
+            <input type="color" class="form-control form-control-color chart-picker flex-fill" id="picker-chart-3" value="#a6e3a1" />
+            <input type="color" class="form-control form-control-color chart-picker flex-fill" id="picker-chart-4" value="#f9e2af" />
+            <input type="color" class="form-control form-control-color chart-picker flex-fill" id="picker-chart-5" value="#cba6f7" />
+          </div>
+        </div>
+        <div class="modal-footer border-secondary d-flex justify-content-between">
+          <button type="button" class="btn btn-sm btn-outline-secondary" id="btn-reset-theme">Reset Default</button>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-bs-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-sm btn-vde-primary" id="btn-apply-theme" data-bs-dismiss="modal">Save &amp; Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- External Browser-Native Engines (Zero Node.js Runtime) -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-cloud@1.2.7/build/d3.layout.cloud.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.6/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.9/purify.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@10.0.1/dist/gridstack-all.js"></script>
+
+  <!-- VDE Adapters & Service Registry -->
+  <script src="./vde-adapters.js"></script>
+  <script src="./vde-ollama-adapter.js"></script>
+  <script src="./vde-obsidian-adapter.js"></script>
+  <script src="./vde-service-registry.js"></script>
+
+  <!-- VDE Processing, Sample Data & OOP D3 Chart Engine -->
+  <script src="./vde-digester.js"></script>
+  <script src="./vde-sample-datasets.js"></script>
+  <script src="./vde-charts.js"></script>
+
+  <!-- VDE Styling Memento, Content Bridge & Core GridStack Governance -->
+  <script src="./vde-style-memento.js"></script>
+  <script src="./vde-content.js"></script>
+  <script src="./vde-core.js"></script>
+
+  <!-- VDE Standalone Application Boot -->
+  <script src="./vde-app.js"></script>
+</body>
+
+</html>
